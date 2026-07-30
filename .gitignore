@@ -1,2 +1,26 @@
+# IntelliJ
 /.idea/
 *.iml
+
+# VS Code
+.vscode/
+
+# Node
+node_modules/
+
+# Build
+dist/
+build/
+target/
+
+# Logs
+*.log
+
+# Environment
+.env
+
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
