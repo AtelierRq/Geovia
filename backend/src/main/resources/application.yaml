@@ -1,3 +1,13 @@
 spring:
   application:
     name: geovia
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/geovia
+    username: geovia
+    password: geovia
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
