@@ -548,3 +548,260 @@ a {
     flex-basis: 270px;
   }
 }
+
+
+/* ---------- Katalog quizów ---------- */
+
+.catalog-page {
+  max-width: 1440px;
+  min-height: calc(100vh - 160px);
+  margin: 0 auto;
+  padding: 64px 48px 80px;
+}
+
+.catalog-heading {
+  max-width: 760px;
+  margin: 0 auto 44px;
+  text-align: center;
+}
+
+.catalog-heading h1 {
+  margin: 14px 0;
+  font-size: clamp(36px, 5vw, 54px);
+  line-height: 1.1;
+  letter-spacing: -2px;
+}
+
+.catalog-heading p {
+  max-width: 620px;
+  margin: 0 auto;
+  color: var(--text-muted);
+  font-size: 16px;
+  line-height: 1.7;
+}
+
+.catalog-section {
+  width: 100%;
+}
+
+.catalog-grid {
+  width: 100%;
+}
+
+.catalog-category-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 24px;
+}
+
+.catalog-category-row .category-card {
+  width: 100%;
+  min-width: 0;
+}
+
+.catalog-category-row .category-image {
+  height: 180px;
+  flex-shrink: 0;
+}
+
+.catalog-category-row .category-card-content {
+  padding: 20px 18px 8px;
+}
+
+.catalog-category-row .card-arrow {
+  margin-top: auto;
+}
+
+.catalog-button {
+  margin-top: 24px;
+}
+
+@media (max-width: 900px) {
+  .catalog-page {
+    padding: 48px 24px 60px;
+  }
+
+  .catalog-category-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+  }
+}
+
+@media (max-width: 560px) {
+  .catalog-page {
+    padding: 36px 20px 48px;
+  }
+
+  .catalog-heading {
+    margin-bottom: 30px;
+  }
+
+  .catalog-category-row {
+    grid-template-columns: 1fr;
+  }
+
+  .catalog-category-row .category-image {
+    height: 150px;
+  }
+}
+
+
+/* ---------- Category area selection ---------- */
+
+.area-page {
+  max-width: 1440px;
+  min-height: calc(100vh - 160px);
+  margin: 0 auto;
+  padding: 36px 48px 80px;
+}
+
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-muted);
+  font-size: 14px;
+  font-weight: 500;
+  transition: color 0.2s ease;
+}
+
+.back-link:hover {
+  color: var(--green);
+}
+
+.area-page .catalog-heading {
+  margin: 28px auto 44px;
+}
+
+.area-title-icon {
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--green-dark);
+  border-radius: 16px;
+}
+
+.area-section {
+  max-width: 1120px;
+  margin: 0 auto;
+}
+
+.area-section-heading {
+  margin-bottom: 22px;
+}
+
+.area-section-heading h2 {
+  margin: 0 0 8px;
+  font-size: 25px;
+  letter-spacing: -0.5px;
+}
+
+.area-section-heading p {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.area-card:hover {
+  transform: translateY(-3px);
+  border-color: var(--green);
+  box-shadow: 0 8px 22px rgba(35, 61, 52, 0.07);
+}
+
+.area-card-text h3 {
+  margin: 0 0 5px;
+  font-size: 16px;
+}
+
+.area-card-text p {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.area-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 24px;
+}
+
+.area-selection-card {
+  width: 100%;
+  min-width: 0;
+  min-height: 290px;
+  padding: 0;
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.area-selection-card .category-image {
+  width: 100%;
+  height: 150px;
+  flex-shrink: 0;
+}
+
+.area-selection-card .category-card-content {
+  width: 100%;
+  padding: 18px 18px 4px;
+  text-align: center;
+}
+
+.area-selection-card .category-card-content h3 {
+  font-size: 19px;
+}
+
+.area-selection-card .category-card-content p {
+  font-size: 13px;
+}
+
+.area-selection-card .card-arrow {
+  margin: auto 18px 16px auto;
+}
+
+@media (max-width: 900px) {
+  .area-page {
+    padding: 30px 24px 60px;
+  }
+
+  .area-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  .area-page {
+    padding: 24px 20px 48px;
+  }
+
+  .area-page .catalog-heading {
+    margin: 24px auto 32px;
+  }
+
+  .area-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .area-card {
+    padding: 16px;
+  }
+}
+
+@media (max-width: 900px) {
+  .area-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+  }
+}
+
+@media (max-width: 560px) {
+  .area-grid {
+    grid-template-columns: 1fr;
+  }
+}
