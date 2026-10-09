@@ -1,3 +1,4 @@
+import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   Compass,
   House,
@@ -7,10 +8,59 @@ import {
   Globe2,
   Flag,
   Landmark,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react'
 import './App.css'
 
 function App() {
+  const categoryRowRef = useRef<HTMLDivElement>(null)
+  const [canScrollLeft, setCanScrollLeft] = useState(false)
+  const [canScrollRight, setCanScrollRight] = useState(false)
+
+  const updateScrollButtons = useCallback(() => {
+    const row = categoryRowRef.current
+
+    if (!row) return
+
+    const maxScrollLeft = row.scrollWidth - row.clientWidth
+    const currentScrollLeft = Math.max(0, row.scrollLeft)
+
+    setCanScrollLeft(currentScrollLeft > 5)
+    setCanScrollRight(maxScrollLeft - currentScrollLeft > 5)
+  }, [])
+
+  const scrollCategories = (direction: 'left' | 'right') => {
+    const row = categoryRowRef.current
+
+    if (!row) return
+
+    row.scrollBy({
+      left: direction === 'left' ? -300 : 300,
+      behavior: 'smooth',
+    })
+  }
+
+  useEffect(() => {
+    const row = categoryRowRef.current
+
+    if (!row) return
+
+    updateScrollButtons()
+
+    row.addEventListener('scroll', updateScrollButtons)
+    window.addEventListener('resize', updateScrollButtons)
+
+    const observer = new ResizeObserver(updateScrollButtons)
+    observer.observe(row)
+
+    return () => {
+      row.removeEventListener('scroll', updateScrollButtons)
+      window.removeEventListener('resize', updateScrollButtons)
+      observer.disconnect()
+    }
+  }, [updateScrollButtons])
+
   return (
     <div className="app">
       <header className="navbar">
@@ -78,45 +128,95 @@ function App() {
             </p>
           </div>
 
-          <div className="category-grid">
-            <a href="#countries" className="category-card">
-              <div className="category-icon">
-                <Globe2 size={26} />
+        <div className="category-carousel">
+          {canScrollLeft && (
+            <button
+              type="button"
+              className="carousel-arrow carousel-arrow-left"
+              aria-label="Poprzednie kategorie"
+              onClick={() => scrollCategories('left')}
+            >
+              <ChevronLeft size={22} />
+            </button>
+          )}
+
+              <div className="category-row" ref={categoryRowRef}>
+                <a href="#countries" className="category-card">
+                  <div className="category-image countries-image">
+                    <Globe2 size={42} />
+                  </div>
+
+                  <div className="category-card-content">
+                    <h3>Państwa</h3>
+                    <p>Poznaj państwa świata i ich położenie.</p>
+                  </div>
+
+                  <ArrowRight size={18} className="card-arrow" />
+                </a>
+
+                <a href="#capitals" className="category-card">
+                  <div className="category-image capitals-image">
+                    <Landmark size={42} />
+                  </div>
+
+                  <div className="category-card-content">
+                    <h3>Stolice</h3>
+                    <p>Sprawdź znajomość stolic państw.</p>
+                  </div>
+
+                  <ArrowRight size={18} className="card-arrow" />
+                </a>
+
+                <a href="#flags" className="category-card">
+                  <div className="category-image flags-image">
+                    <Flag size={42} />
+                  </div>
+
+                  <div className="category-card-content">
+                    <h3>Flagi</h3>
+                    <p>Rozpoznawaj flagi państw świata.</p>
+                  </div>
+
+                  <ArrowRight size={18} className="card-arrow" />
+                </a>
+
+                <a href="#seas" className="category-card">
+                  <div className="category-image seas-image">
+                    <Globe2 size={42} />
+                  </div>
+
+                  <div className="category-card-content">
+                    <h3>Morza</h3>
+                    <p>Sprawdź swoją wiedzę o morzach świata.</p>
+                  </div>
+
+                  <ArrowRight size={18} className="card-arrow" />
+                </a>
+
+                <a href="#rivers" className="category-card">
+                  <div className="category-image rivers-image">
+                    <Globe2 size={42} />
+                  </div>
+
+                  <div className="category-card-content">
+                    <h3>Rzeki</h3>
+                    <p>Poznaj największe rzeki świata.</p>
+                  </div>
+
+                  <ArrowRight size={18} className="card-arrow" />
+                </a>
               </div>
 
-              <div>
-                <h3>Państwa</h3>
-                <p>Poznaj państwa świata i ich położenie.</p>
-              </div>
-
-              <ArrowRight size={18} className="card-arrow" />
-            </a>
-
-            <a href="#capitals" className="category-card">
-              <div className="category-icon">
-                <Landmark size={26} />
-              </div>
-
-              <div>
-                <h3>Stolice</h3>
-                <p>Sprawdź znajomość stolic państw.</p>
-              </div>
-
-              <ArrowRight size={18} className="card-arrow" />
-            </a>
-
-            <a href="#flags" className="category-card">
-              <div className="category-icon">
-                <Flag size={26} />
-              </div>
-
-              <div>
-                <h3>Flagi</h3>
-                <p>Rozpoznawaj flagi państw świata.</p>
-              </div>
-
-              <ArrowRight size={18} className="card-arrow" />
-            </a>
+            {canScrollRight && (
+              <button
+                type="button"
+                className="carousel-arrow carousel-arrow-right"
+                aria-label="Następne kategorie"
+                onClick={() => scrollCategories('right')}
+              >
+                <ChevronRight size={22} />
+              </button>
+            )}
           </div>
         </section>
 
@@ -139,7 +239,7 @@ function App() {
       </main>
 
       <footer className="footer">
-        <span>© 2027 Geovia</span>
+        <span>© 2026 Geovia</span>
         <span>Platforma do nauki geografii świata</span>
       </footer>
     </div>

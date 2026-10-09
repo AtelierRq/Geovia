@@ -126,7 +126,7 @@ a {
 /* ---------- Hero ---------- */
 
 .hero-section {
-  max-width: 1180px;
+  max-width: 1440px;
   min-height: 560px;
 
   margin: 0 auto;
@@ -140,6 +140,7 @@ a {
 
 .hero-content {
   max-width: 620px;
+  text-align: center;
 }
 
 .eyebrow {
@@ -165,8 +166,8 @@ a {
 }
 
 .hero-content p {
-  max-width: 540px;
-
+  max-width: 800px;
+  
   margin: 0 0 30px;
 
   color: var(--text-muted);
@@ -225,8 +226,9 @@ a {
 /* ---------- Quiz categories ---------- */
 
 .quiz-section {
-  max-width: 1180px;
+  max-width: 1440px;
 
+  text-align: center;
   margin: 0 auto;
   padding: 80px 48px;
 }
@@ -249,24 +251,96 @@ a {
   font-size: 16px;
 }
 
-.category-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
+.category-carousel {
+  position: relative;
+  min-width: 0;
+}
+
+.category-row {
+  display: flex;
   gap: 18px;
+  overflow-x: auto;
+  padding: 4px 4px 12px;
+
+  scroll-snap-type: x mandatory;
+  scroll-behavior: smooth;
+  scrollbar-width: none;
+}
+
+.category-row::-webkit-scrollbar {
+  display: none;
+}
+
+.carousel-arrow {
+  position: absolute;
+  top: 50%;
+  z-index: 2;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 42px;
+  height: 42px;
+
+  color: var(--green-dark);
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 50%;
+
+  box-shadow: 0 4px 14px rgba(35, 61, 52, 0.12);
+  cursor: pointer;
+
+  transform: translateY(-50%);
+  transition:
+    background 0.2s ease,
+    color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.carousel-arrow:hover {
+  color: white;
+  background: var(--green);
+  transform: translateY(-50%) scale(1.05);
+}
+
+.carousel-arrow-left {
+  left: -21px;
+}
+
+.carousel-arrow-right {
+  right: -21px;
+}
+
+@media (max-width: 800px) {
+  .carousel-arrow {
+    width: 36px;
+    height: 36px;
+  }
+
+  .carousel-arrow-left {
+    left: -10px;
+  }
+
+  .carousel-arrow-right {
+    right: -10px;
+  }
 }
 
 .category-card {
-  min-height: 180px;
-
-  padding: 24px;
+  flex: 0 0 250px;
+  min-height: 290px;
 
   display: flex;
   flex-direction: column;
-  gap: 18px;
 
   background: var(--white);
   border: 1px solid var(--border);
   border-radius: 14px;
+
+  overflow: hidden;
+
+  scroll-snap-align: start;
 
   transition:
     transform 0.2s ease,
@@ -280,45 +354,63 @@ a {
   box-shadow: 0 12px 30px rgba(35, 61, 52, 0.08);
 }
 
-.category-icon {
-  width: 48px;
-  height: 48px;
+.category-image {
+  height: 150px;
 
   display: flex;
   align-items: center;
   justify-content: center;
 
-  color: var(--green);
-  background: var(--green-light);
+  color: var(--green-dark);
+}
 
-  border-radius: 12px;
+.countries-image {
+  background: #dce9df;
+}
+
+.capitals-image {
+  background: #e8e1d4;
+}
+
+.flags-image {
+  background: #e3e8df;
+}
+
+.seas-image {
+  background: #dbe8e8;
+}
+
+.rivers-image {
+  background: #e1e7dc;
+}
+
+.category-card-content {
+  padding: 18px 18px 4px;
+  text-align: center;
 }
 
 .category-card h3 {
   margin: 0 0 6px;
-
-  font-size: 20px;
+  font-size: 19px;
 }
 
 .category-card p {
   margin: 0;
 
   color: var(--text-muted);
-  font-size: 14px;
+  font-size: 13px;
   line-height: 1.5;
 }
 
 .card-arrow {
-  margin-top: auto;
-  align-self: flex-end;
-
+  margin: auto 18px 16px auto;
   color: var(--green);
 }
 
 /* ---------- CTA ---------- */
 
 .cta-section {
-  max-width: 1084px;
+  max-width: 1344px;
 
   margin: 20px auto 80px;
   padding: 48px;
@@ -357,7 +449,7 @@ a {
 /* ---------- Footer ---------- */
 
 .footer {
-  max-width: 1180px;
+  max-width: 1440px;
 
   margin: 0 auto;
   padding: 24px 48px 36px;
@@ -410,14 +502,11 @@ a {
     padding: 60px 24px;
   }
 
-  .category-grid {
-    grid-template-columns: 1fr;
-  }
-
   .cta-section {
     margin: 20px 24px 60px;
     padding: 32px 24px;
 
+    text-align: center;
     flex-direction: column;
     align-items: flex-start;
   }
@@ -428,5 +517,34 @@ a {
 
     flex-direction: column;
     gap: 8px;
+  }
+}
+
+/* ---------- Wide desktop screens ---------- */
+
+@media (min-width: 1400px) {
+  .hero-section {
+    min-height: 620px;
+    padding: 80px 64px;
+    gap: 80px;
+  }
+
+  .hero-content {
+    max-width: 680px;
+    text-align: center;
+  }
+
+  .hero-globe {
+    width: 360px;
+    height: 360px;
+    flex-shrink: 0;
+  }
+
+  .quiz-section {
+    padding: 64px;
+  }
+
+  .category-card {
+    flex-basis: 270px;
   }
 }
