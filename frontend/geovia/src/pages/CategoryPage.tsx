@@ -1,10 +1,11 @@
 import { ArrowLeft, ArrowRight } from 'lucide-react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import { categories } from '../data/categories'
 import { areas } from '../data/areas'
 
 function CategoryPage() {
   const { categoryId } = useParams()
+  const navigate = useNavigate()
   const category = categories.find((item) => item.id === categoryId)
 
   if (!category) {
@@ -50,9 +51,7 @@ function CategoryPage() {
                 type="button"
                 className="category-card area-selection-card"
                 key={area.id}
-                onClick={() => {
-                  // Następny etap: wybór trybu quizu.
-                }}
+                onClick={() => navigate(`/categories/${category.id}/areas/${area.id}/modes`)}
               >
                 <div className={`category-image ${area.imageClass}`}>
                   <AreaIcon size={42} />

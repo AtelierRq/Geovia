@@ -1,3 +1,4 @@
+import type { ComponentType } from 'react'
 import { ArrowRight } from 'lucide-react'
 import { Link } from 'react-router-dom'
 
@@ -5,7 +6,7 @@ type CardCategory = {
   id: string
   title: string
   description: string
-  icon: React.ComponentType<{ size?: number }>
+  icon: ComponentType<{ size?: number }>
   imageClass: string
 }
 
