@@ -1,0 +1,129 @@
+/* ---------- Category area selection ---------- */
+
+.area-page {
+  max-width: 1440px;
+  min-height: calc(100vh - 160px);
+  margin: 0 auto;
+  padding: 36px 48px 80px;
+}
+
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-muted);
+  font-size: 14px;
+  font-weight: 500;
+  transition: color 0.2s ease;
+}
+
+.back-link:hover {
+  color: var(--green);
+}
+
+.area-page .catalog-heading {
+  margin: 28px auto 44px;
+}
+
+.area-title-icon {
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--green-dark);
+  border-radius: 16px;
+}
+
+.area-section {
+  max-width: 1120px;
+  margin: 0 auto;
+}
+
+.area-section-heading {
+  margin-bottom: 22px;
+}
+
+.area-section-heading h2 {
+  margin: 0 0 8px;
+  font-size: 25px;
+  letter-spacing: -0.5px;
+}
+
+.area-section-heading p {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.area-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 24px;
+}
+
+.area-selection-card {
+  width: 100%;
+  min-width: 0;
+  min-height: 290px;
+  padding: 0;
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.area-selection-card .category-image {
+  width: 100%;
+  height: 150px;
+  flex-shrink: 0;
+}
+
+.area-selection-card .category-card-content {
+  width: 100%;
+  padding: 18px 18px 4px;
+  text-align: center;
+}
+
+.area-selection-card .category-card-content h3 {
+  font-size: 19px;
+}
+
+.area-selection-card .category-card-content p {
+  font-size: 13px;
+}
+
+.area-selection-card .card-arrow {
+  margin: auto 18px 16px auto;
+}
+
+@media (max-width: 900px) {
+  .area-page {
+    padding: 30px 24px 60px;
+  }
+
+  .area-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+  }
+}
+
+@media (max-width: 560px) {
+  .area-page {
+    padding: 24px 20px 48px;
+  }
+
+  .area-page .catalog-heading {
+    margin: 24px auto 32px;
+  }
+
+  .area-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .area-card {
+    padding: 16px;
+  }
+}

@@ -1,0 +1,94 @@
+/* ---------- Katalog quizów ---------- */
+
+.catalog-page {
+  max-width: 1440px;
+  min-height: calc(100vh - 160px);
+  margin: 0 auto;
+  padding: 64px 48px 80px;
+}
+
+.catalog-heading {
+  max-width: 760px;
+  margin: 0 auto 44px;
+  text-align: center;
+}
+
+.catalog-heading h1 {
+  margin: 14px 0;
+  font-size: clamp(36px, 5vw, 54px);
+  line-height: 1.1;
+  letter-spacing: -2px;
+}
+
+.catalog-heading p {
+  max-width: 620px;
+  margin: 0 auto;
+  color: var(--text-muted);
+  font-size: 16px;
+  line-height: 1.7;
+}
+
+.catalog-section {
+  width: 100%;
+}
+
+.catalog-grid {
+  width: 100%;
+}
+
+.catalog-category-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 24px;
+}
+
+.catalog-category-row .category-card {
+  width: 100%;
+  min-width: 0;
+}
+
+.catalog-category-row .category-image {
+  height: 180px;
+  flex-shrink: 0;
+}
+
+.catalog-category-row .category-card-content {
+  padding: 20px 18px 8px;
+}
+
+.catalog-category-row .card-arrow {
+  margin-top: auto;
+}
+
+.catalog-button {
+  margin-top: 24px;
+}
+
+@media (max-width: 900px) {
+  .catalog-page {
+    padding: 48px 24px 60px;
+  }
+
+  .catalog-category-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+  }
+}
+
+@media (max-width: 560px) {
+  .catalog-page {
+    padding: 36px 20px 48px;
+  }
+
+  .catalog-heading {
+    margin-bottom: 30px;
+  }
+
+  .catalog-category-row {
+    grid-template-columns: 1fr;
+  }
+
+  .catalog-category-row .category-image {
+    height: 150px;
+  }
+}
