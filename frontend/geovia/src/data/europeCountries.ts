@@ -5,7 +5,7 @@ export type EuropeanCountry = {
   mapId: string
 }
 
-// Zakres quizu: 47 państw. Nazwy są polskie; aliasy służą do akceptowania
+// Zakres quizu: 48 państw. Nazwy są polskie; aliasy służą do akceptowania
 // popularnych wariantów i dawnych nazw.
 export const europeCountries: EuropeanCountry[] = [
   { id: 'albania', name: 'Albania', mapId: '8' },
@@ -28,6 +28,7 @@ export const europeCountries: EuropeanCountry[] = [
   { id: 'iceland', name: 'Islandia', mapId: '352' },
   { id: 'ireland', name: 'Irlandia', mapId: '372' },
   { id: 'italy', name: 'Włochy', mapId: '380' },
+  { id: 'kazakhstan', name: 'Kazachstan', mapId: '398' },
   { id: 'kosovo', name: 'Kosowo', mapId: '383' },
   { id: 'latvia', name: 'Łotwa', mapId: '428' },
   { id: 'liechtenstein', name: 'Liechtenstein', mapId: '438' },
