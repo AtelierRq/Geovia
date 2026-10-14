@@ -224,7 +224,7 @@ function TypeCountryToMapPage() {
                                 geography={geo}
                                 fill={isFound ? '#68a889' : '#e7e9e2'}
                                 stroke="#9daaa1"
-                                strokeWidth={0.65}
+                                strokeWidth={Math.max(0.12, 0.65 / Math.pow(mapZoom, 0.62))}
                                 style={{ outline: 'none', pointerEvents: 'none' }}
                                 className="map-country"
                               />
