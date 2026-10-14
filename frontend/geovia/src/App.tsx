@@ -6,8 +6,7 @@ import QuizCatalogPage from './pages/QuizCatalogPage'
 import CategoryPage from './pages/CategoryPage'
 import NotFoundPage from './pages/NotFoundPage'
 import QuizModesPage from './pages/QuizModesPage'
-import QuizPlaceholderPage from './pages/QuizPlaceholderPage'
-import TypeCountryToMapPage from './pages/TypeCountryToMapPage'
+import QuizRoute from './pages/QuizRoute'
 import './App.css'
 
 function App() {
@@ -20,8 +19,7 @@ function App() {
           <Route path="/quizzes" element={<QuizCatalogPage />} />
           <Route path="/categories/:categoryId" element={<CategoryPage />} />
           <Route path="/categories/:categoryId/areas/:areaId/modes" element={<QuizModesPage />} />
-          <Route path="/quiz/countries/europe/type-to-map" element={<TypeCountryToMapPage />} />
-          <Route path="/quiz/:categoryId/:areaId/:modeId" element={<QuizPlaceholderPage />} />
+          <Route path="/quiz/:categoryId/:areaId/:modeId" element={<QuizRoute />} />
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
         <Footer />

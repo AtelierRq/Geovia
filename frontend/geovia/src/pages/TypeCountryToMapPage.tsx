@@ -5,7 +5,7 @@ import { ComposableMap, Geographies, Geography, ZoomableGroup } from 'react-simp
 import worldData from 'world-atlas/countries-50m.json'
 import { categories } from '../data/categories'
 import { areas } from '../data/areas'
-import { europeCountries, normalizeCountryName } from '../data/europeCountries'
+import { getCountriesByContinent, countries, normalizeCountryName } from '../data/countries'
 import '../styles/country-quiz.css'
 
 type SavedQuizResult = {
@@ -52,10 +52,13 @@ function formatTime(seconds: number) {
 
 function TypeCountryToMapPage() {
   const { categoryId: routeCategoryId, areaId: routeAreaId, modeId: routeModeId } = useParams()
-  // Ta strona jest dedykowana trybowi Państwa → Europa.
   const categoryId = routeCategoryId ?? 'countries'
   const areaId = routeAreaId ?? 'europe'
   const modeId = routeModeId ?? 'type-to-map'
+  const quizCountries = areaId === 'world' ? countries : getCountriesByContinent(areaId as any)
+  const isWorldMap = areaId === 'world'
+  const mapCenter: [number, number] = isWorldMap ? [0, 15] : [20, 54]
+  const projectionScale = isWorldMap ? 155 : 520
   const category = categories.find((item) => item.id === categoryId)
   const area = areas.find((item) => item.id === areaId)
   const [answer, setAnswer] = useState('')
@@ -65,11 +68,11 @@ function TypeCountryToMapPage() {
   const [now, setNow] = useState(Date.now())
   const [endedResult, setEndedResult] = useState<SavedQuizResult | null>(null)
   const [mapZoom, setMapZoom] = useState(1)
-  const [mapCenter, setMapCenter] = useState<[number, number]>([20, 54])
+  const [mapCenterState, setMapCenterState] = useState<[number, number]>(isWorldMap ? [0, 15] : [20, 54])
 
   const foundSet = useMemo(() => new Set(foundIds), [foundIds])
   const elapsedSeconds = startedAt === null ? 0 : Math.floor((now - startedAt) / 1000)
-  const isCompleted = foundIds.length === europeCountries.length
+  const isCompleted = foundIds.length === quizCountries.length
   const isEnded = endedResult !== null
 
   useEffect(() => {
@@ -86,8 +89,8 @@ function TypeCountryToMapPage() {
       areaId: areaId ?? 'europe',
       modeId: modeId ?? 'type-to-map',
       completed: foundIds.length,
-      total: europeCountries.length,
-      percentage: Math.round((foundIds.length / europeCountries.length) * 100),
+      total: quizCountries.length,
+      percentage: Math.round((foundIds.length / quizCountries.length) * 100),
       elapsedSeconds,
       endedAt: new Date().toISOString(),
       status,
@@ -112,7 +115,7 @@ function TypeCountryToMapPage() {
     const normalizedAnswer = normalizeCountryName(answer)
     if (!normalizedAnswer) return
 
-    const country = europeCountries.find((item) =>
+    const country = quizCountries.find((item) =>
       [item.name, ...(item.aliases ?? [])].some((name) => normalizeCountryName(name) === normalizedAnswer),
     )
 
@@ -131,12 +134,12 @@ function TypeCountryToMapPage() {
     setAnswer('')
   }
 
-  if (!category || !area || categoryId !== 'countries' || areaId !== 'europe' || modeId !== 'type-to-map') {
+  if (!category || !area || categoryId !== 'countries' || !['world', 'africa', 'asia', 'europe', 'north-america', 'south-america', 'oceania'].includes(areaId) || modeId !== 'type-to-map') {
     return (
       <main className="catalog-page">
         <section className="catalog-heading">
           <h1>Ten quiz nie jest dostępny</h1>
-          <p>Na razie tryb uzupełniania mapy działa dla państw Europy.</p>
+          <p>Ten tryb nie jest dostępny dla wybranego obszaru.</p>
           <Link to="/quizzes" className="primary-button">Wróć do katalogu</Link>
         </section>
       </main>
@@ -153,7 +156,7 @@ function TypeCountryToMapPage() {
         <section className="quiz-result-card">
           <span className="quiz-result-icon"><Trophy size={34} /></span>
           <span className="eyebrow">QUIZ ZAKOŃCZONY</span>
-          <h1>{endedResult.status === 'completed' ? 'Gratulacje! Uzupełniono mapę Europy.' : 'Wynik quizu'}</h1>
+          <h1>{endedResult.status === 'completed' ? 'Gratulacje! Uzupełniono mapę.' : 'Wynik quizu'}</h1>
           <div className="quiz-result-score">{endedResult.completed}/{endedResult.total}</div>
           <p>Odnalezione państwa: <strong>{endedResult.percentage}%</strong></p>
           <p>Czas: <strong>{formatTime(endedResult.elapsedSeconds)}</strong></p>
@@ -168,41 +171,41 @@ function TypeCountryToMapPage() {
           <header className="country-quiz-heading">
             <span className="eyebrow">{category.title.toLocaleUpperCase('pl-PL')} · {area.name.toLocaleUpperCase('pl-PL')}</span>
             <h1>Wpisz państwo</h1>
-            <p>Wpisz nazwę dowolnego państwa Europy. Poprawna odpowiedź zostanie zaznaczona na mapie.</p>
+            <p>Wpisz nazwę dowolnego państwa. Poprawna odpowiedź zostanie zaznaczona na mapie.</p>
           </header>
 
           <section className="country-quiz-stats" aria-label="Postęp quizu">
-            <div className="country-stat"><Flag size={19} /><span><strong>{foundIds.length}/{europeCountries.length}</strong><small>Znalezione państwa</small></span></div>
+            <div className="country-stat"><Flag size={19} /><span><strong>{foundIds.length}/{quizCountries.length}</strong><small>Znalezione państwa</small></span></div>
             <div className="country-stat"><Clock3 size={19} /><span><strong>{formatTime(elapsedSeconds)}</strong><small>Czas</small></span></div>
-            <div className="country-stat"><Trophy size={19} /><span><strong>{Math.round(foundIds.length / europeCountries.length * 100)}%</strong><small>Ukończenie mapy</small></span></div>
+            <div className="country-stat"><Trophy size={19} /><span><strong>{Math.round(foundIds.length / quizCountries.length * 100)}%</strong><small>Ukończenie mapy</small></span></div>
           </section>
 
           <section className="country-quiz-layout">
             <div className="europe-map-card">
-              <div className="europe-map-header"><h2>Mapa Europy</h2><span>{foundIds.length} z {europeCountries.length}</span></div>
+              <div className="europe-map-header"><h2>{isWorldMap ? 'Mapa świata' : `Mapa: ${area.name}`}</h2><span>{foundIds.length} z {quizCountries.length}</span></div>
               <div
                 className="europe-map-wrap"
                 onWheel={(event) => {
                   event.preventDefault()
-                  setMapZoom((current) => Math.min(8, Math.max(1, current * (event.deltaY < 0 ? 1.2 : 1 / 1.2))))
+                  setMapZoom((current) => Math.min(20, Math.max(1, current * (event.deltaY < 0 ? 1.2 : 1 / 1.2))))
                 }}
               >
                 <div className="map-zoom-controls" aria-label="Sterowanie powiększeniem mapy">
-                  <button type="button" aria-label="Powiększ mapę" onClick={() => setMapZoom((current) => Math.min(8, current * 1.25))}>
+                  <button type="button" aria-label="Powiększ mapę" onClick={() => setMapZoom((current) => Math.min(20, current * 1.25))}>
                     <Plus size={17} />
                   </button>
                   <button type="button" aria-label="Pomniejsz mapę" onClick={() => setMapZoom((current) => Math.max(1, current / 1.25))}>
                     <Minus size={17} />
                   </button>
                 </div>
-                <ComposableMap projection="geoMercator" projectionConfig={{ center: [20, 54], scale: 520 }} width={800} height={560}>
+                <ComposableMap projection="geoMercator" projectionConfig={{ center: mapCenter, scale: projectionScale }} width={800} height={560}>
                   <ZoomableGroup
-                    center={mapCenter}
+                    center={mapCenterState}
                     zoom={mapZoom}
                     minZoom={1}
-                    maxZoom={8}
+                    maxZoom={20}
                     onMoveEnd={({ coordinates, zoom }) => {
-                      setMapCenter(coordinates as [number, number])
+                      setMapCenterState(coordinates as [number, number])
                       if (typeof zoom === 'number') {
                         setMapZoom(zoom)
                       }
@@ -213,7 +216,7 @@ function TypeCountryToMapPage() {
                         <>
                           {geographies.map((geo) => {
                             const mapId = String(geo.id).replace(/^0+/, '')
-                            const country = europeCountries.find((item) => item.mapId.replace(/^0+/, '') === mapId)
+                            const country = quizCountries.find((item) => item.mapId.replace(/^0+/, '') === mapId)
                             const isFound = country ? foundSet.has(country.id) : false
                             return (
                               <Geography
@@ -244,7 +247,7 @@ function TypeCountryToMapPage() {
                           geography={geo}
                           fill={foundSet.has('kosovo') ? '#68a889' : '#e7e9e2'}
                           stroke="#9daaa1"
-                          strokeWidth={0.65}
+                          strokeWidth={Math.max(0.12, 0.65 / Math.pow(mapZoom, 0.62))}
                           style={{ outline: 'none', pointerEvents: 'none' }}
                           className="map-country"
                         />
@@ -281,7 +284,7 @@ function TypeCountryToMapPage() {
               <div className={`quiz-feedback ${feedback ? `feedback-${feedback.type}` : ''}`} aria-live="polite">
                 {feedback ? <>{feedback.type === 'success' ? <CheckCircle2 size={18} /> : <XCircle size={18} />}<span>{feedback.text}</span></> : <span>Wpisz nazwę i naciśnij Enter lub przycisk.</span>}
               </div>
-              <div className="country-progress-track"><span style={{ width: `${foundIds.length / europeCountries.length * 100}%` }} /></div>
+              <div className="country-progress-track"><span style={{ width: `${foundIds.length / quizCountries.length * 100}%` }} /></div>
               <button className="end-quiz-button" type="button" onClick={() => saveResult(isCompleted ? 'completed' : 'ended-early')}>
                 Zakończ quiz
               </button>
@@ -290,7 +293,7 @@ function TypeCountryToMapPage() {
           </section>
           {isCompleted && (
             <div className="quiz-complete-banner">
-              <Trophy size={21} /><span><strong>Udało się!</strong> Odnaleziono wszystkie państwa Europy.</span>
+              <Trophy size={21} /><span><strong>Udało się!</strong> Odnaleziono wszystkie państwa.</span>
               <button type="button" className="primary-button" onClick={() => saveResult('completed')}>Zapisz wynik</button>
             </div>
           )}
