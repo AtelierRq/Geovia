@@ -191,7 +191,7 @@ export const countries: Country[] = [
   { id: 'timor-leste', name: 'Timor Wschodni', aliases: ['Timor-Leste', 'Timor'], continents: ['asia'], mapId: '626' },
   { id: 'togo', name: 'Togo', continents: ['africa'], mapId: '768' },
   { id: 'tonga', name: 'Tonga', continents: ['oceania'], mapId: '776' },
-  { id: 'trinidad-and-tobago', name: 'Trynidad i Tobago', aliases: ['Trinidad i Tobago'], continents: ['north-america'], mapId: '780' },
+  { id: 'trinidad-and-tobago', name: 'Trynidad i Tobago', aliases: ['Trinidad i Tobago', 'Trynidad'], continents: ['north-america'], mapId: '780' },
   { id: 'tunisia', name: 'Tunezja', continents: ['africa'], mapId: '788' },
   { id: 'turkey', name: 'Turcja', aliases: ['Türkiye', 'Republika Turcji'], continents: ["europe", "asia"], mapId: '792' },
   { id: 'turkmenistan', name: 'Turkmenistan', continents: ['asia'], mapId: '795' },
