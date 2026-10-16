@@ -251,12 +251,28 @@
   background: #e3e8df;
 }
 
+.cities-image {
+  background: #ded9e7;
+}
+
 .seas-image {
   background: #dbe8e8;
 }
 
 .rivers-image {
   background: #e1e7dc;
+}
+
+.islands-image {
+  background: #e8e1d4;
+}
+
+.dependent-territories-image {
+  background: #e8dfe1;
+}
+
+.unrecognized-states-image {
+  background: #d4e8e7;
 }
 
 .category-card-content {

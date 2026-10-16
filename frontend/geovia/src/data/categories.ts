@@ -4,6 +4,10 @@ import {
   Landmark,
   Waves,
   Droplets,
+  Building2,
+  Mountain,
+  Compass,
+  ShieldQuestion,
 } from 'lucide-react'
 
 export const categories = [
@@ -29,6 +33,13 @@ export const categories = [
     imageClass: 'flags-image',
   },
   {
+    id: 'cities',
+    title: 'Miasta',
+    description: 'Poznaj największe miasta świata.',
+    icon: Building2,
+    imageClass: 'cities-image',
+  },
+  {
     id: 'seas',
     title: 'Morza',
     description: 'Sprawdź swoją wiedzę o morzach świata.',
@@ -41,5 +52,26 @@ export const categories = [
     description: 'Poznaj największe rzeki świata.',
     icon: Droplets,
     imageClass: 'rivers-image',
+  },
+  {
+    id: 'islands',
+    title: 'Wyspy',
+    description: 'Poznaj największe wyspy świata.',
+    icon: Mountain,
+    imageClass: 'islands-image',
+  },
+  {
+    id: 'dependent-territories',
+    title: 'Terytoria zależne',
+    description: 'Poznaj terytoria zależne na świecie.',
+    icon: Compass,
+    imageClass: 'dependent-territories-image',
+  },
+  {
+    id: 'unrecognized-states',
+    title: 'Państwa nieuznawane',
+    description: 'Poznaj państwa i terytoria o spornym statusie międzynarodowym.',
+    icon: ShieldQuestion,
+    imageClass: 'unrecognized-states-image',
   },
 ]
