@@ -183,7 +183,7 @@ function TypeCapitalPage() {
           </section>
 
           <section className="capital-quiz-card">
-            <div className="europe-map-header"><h2>Jaką stolicę ma to państwo?</h2><span>Poprawnie: {foundIds.length} z {baseQuizItems.length}</span></div>
+            <div className="map-header"><h2>Jaką stolicę ma to państwo?</h2><span>Poprawnie: {foundIds.length} z {baseQuizItems.length}</span></div>
             <div className="capital-prompt">
               <span className="eyebrow">PAŃSTWO</span>
               <h2>{current?.countryName ?? 'Brak państw w kolejce'}</h2>

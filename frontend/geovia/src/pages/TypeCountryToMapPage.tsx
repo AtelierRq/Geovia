@@ -182,10 +182,10 @@ function TypeCountryToMapPage() {
           </section>
 
           <section className="country-quiz-layout">
-            <div className="europe-map-card">
-              <div className="europe-map-header"><h2>{isWorldMap ? 'Mapa świata' : `Mapa: ${area.name}`}</h2><span>{foundIds.length} z {quizCountries.length}</span></div>
+            <div className="map-card">
+              <div className="map-header"><h2>{isWorldMap ? 'Mapa świata' : `Mapa: ${area.name}`}</h2><span>{foundIds.length} z {quizCountries.length}</span></div>
               <div
-                className="europe-map-wrap"
+                className="map-wrap"
                 onWheel={(event) => {
                   event.preventDefault()
                   setMapZoom((current) => Math.min(20, Math.max(1, current * (event.deltaY < 0 ? 1.2 : 1 / 1.2))))
@@ -286,7 +286,7 @@ function TypeCountryToMapPage() {
                 {feedback ? <>{feedback.type === 'success' ? <CheckCircle2 size={18} /> : <XCircle size={18} />}<span>{feedback.text}</span></> : <span>Wpisz nazwę i naciśnij Enter lub przycisk.</span>}
               </div>
               <div className="quiz-progress-track"><span style={{ width: `${foundIds.length / quizCountries.length * 100}%` }} /></div>
-              <button className="quiz-end-button" type="button" onClick={() => saveResult(isCompleted ? 'completed' : 'ended-early')}>
+              <button className="secondary-button quiz-end-button" type="button" onClick={() => saveResult(isCompleted ? 'completed' : 'ended-early')}>
                 Zakończ quiz
               </button>
               <p className="quiz-end-hint">Zakończona próba zostanie zapisana i nie będzie można jej wznowić.</p>
