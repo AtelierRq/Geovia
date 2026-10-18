@@ -6,6 +6,7 @@ import worldData from 'world-atlas/countries-50m.json'
 import { categories } from '../data/categories'
 import { areas } from '../data/areas'
 import { getCountriesByContinent, countries, normalizeCountryName } from '../data/countries'
+import '../styles/quiz-common.css'
 import '../styles/country-quiz.css'
 
 type SavedQuizResult = {
@@ -147,8 +148,8 @@ function TypeCountryToMapPage() {
   }
 
   return (
-    <main className="country-quiz-page">
-      <Link to={`/categories/${category.id}/areas/${area.id}/modes`} className="back-link country-quiz-back">
+    <main className="quiz-page">
+      <Link to={`/categories/${category.id}/areas/${area.id}/modes`} className="back-link quiz-back">
         <ArrowLeft size={17} /> Wróć do trybów
       </Link>
 
@@ -168,16 +169,16 @@ function TypeCountryToMapPage() {
         </section>
       ) : (
         <>
-          <header className="country-quiz-heading">
+          <header className="quiz-heading">
             <span className="eyebrow">{category.title.toLocaleUpperCase('pl-PL')} · {area.name.toLocaleUpperCase('pl-PL')}</span>
             <h1>Wpisz państwo</h1>
             <p>Wpisz nazwę dowolnego państwa. Poprawna odpowiedź zostanie zaznaczona na mapie.</p>
           </header>
 
-          <section className="country-quiz-stats" aria-label="Postęp quizu">
-            <div className="country-stat"><Flag size={19} /><span><strong>{foundIds.length}/{quizCountries.length}</strong><small>Znalezione państwa</small></span></div>
-            <div className="country-stat"><Clock3 size={19} /><span><strong>{formatTime(elapsedSeconds)}</strong><small>Czas</small></span></div>
-            <div className="country-stat"><Trophy size={19} /><span><strong>{Math.round(foundIds.length / quizCountries.length * 100)}%</strong><small>Ukończenie mapy</small></span></div>
+          <section className="quiz-stats" aria-label="Postęp quizu">
+            <div className="quiz-stat"><Flag size={19} /><span><strong>{foundIds.length}/{quizCountries.length}</strong><small>Znalezione państwa</small></span></div>
+            <div className="quiz-stat"><Clock3 size={19} /><span><strong>{formatTime(elapsedSeconds)}</strong><small>Czas</small></span></div>
+            <div className="quiz-stat"><Trophy size={19} /><span><strong>{Math.round(foundIds.length / quizCountries.length * 100)}%</strong><small>Ukończenie mapy</small></span></div>
           </section>
 
           <section className="country-quiz-layout">
@@ -259,7 +260,7 @@ function TypeCountryToMapPage() {
               <div className="map-legend"><span><i className="legend-swatch legend-found" /> Odnalezione</span><span><i className="legend-swatch legend-unfound" /> Do odnalezienia</span></div>
             </div>
 
-            <aside className="country-answer-card">
+            <aside className="quiz-answer-card">
               <h2>Jakie państwo znasz?</h2>
               <p>Wpisuj nazwy po polsku. Wielkość liter i polskie znaki nie mają znaczenia.</p>
               <form onSubmit={submitAnswer}>
@@ -284,11 +285,11 @@ function TypeCountryToMapPage() {
               <div className={`quiz-feedback ${feedback ? `feedback-${feedback.type}` : ''}`} aria-live="polite">
                 {feedback ? <>{feedback.type === 'success' ? <CheckCircle2 size={18} /> : <XCircle size={18} />}<span>{feedback.text}</span></> : <span>Wpisz nazwę i naciśnij Enter lub przycisk.</span>}
               </div>
-              <div className="country-progress-track"><span style={{ width: `${foundIds.length / quizCountries.length * 100}%` }} /></div>
-              <button className="end-quiz-button" type="button" onClick={() => saveResult(isCompleted ? 'completed' : 'ended-early')}>
+              <div className="quiz-progress-track"><span style={{ width: `${foundIds.length / quizCountries.length * 100}%` }} /></div>
+              <button className="quiz-end-button" type="button" onClick={() => saveResult(isCompleted ? 'completed' : 'ended-early')}>
                 Zakończ quiz
               </button>
-              <p className="end-quiz-hint">Zakończona próba zostanie zapisana i nie będzie można jej wznowić.</p>
+              <p className="quiz-end-hint">Zakończona próba zostanie zapisana i nie będzie można jej wznowić.</p>
             </aside>
           </section>
           {isCompleted && (

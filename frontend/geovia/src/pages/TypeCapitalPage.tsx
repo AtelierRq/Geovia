@@ -5,6 +5,7 @@ import { categories } from '../data/categories'
 import { areas } from '../data/areas'
 import { capitals } from '../data/capitals'
 import { countries, normalizeCountryName } from '../data/countries'
+import '../styles/quiz-common.css'
 import '../styles/capital-quiz.css'
 
 type Result = {
@@ -148,8 +149,8 @@ function TypeCapitalPage() {
   }
 
   return (
-    <main className="country-quiz-page">
-      <Link to={`/categories/${category.id}/areas/${area.id}/modes`} className="back-link country-quiz-back">
+    <main className="quiz-page">
+      <Link to={`/categories/${category.id}/areas/${area.id}/modes`} className="back-link quiz-back">
         <ArrowLeft size={17} /> Wróć do trybów
       </Link>
 
@@ -169,16 +170,16 @@ function TypeCapitalPage() {
         </section>
       ) : (
         <>
-          <header className="country-quiz-heading">
+          <header className="quiz-heading">
             <span className="eyebrow">{category.title.toLocaleUpperCase('pl-PL')} · {area.name.toLocaleUpperCase('pl-PL')}</span>
             <h1>Wpisz stolicę</h1>
             <p>Wyświetlamy nazwę państwa. Wpisz jego stolicę po polsku.</p>
           </header>
 
-          <section className="country-quiz-stats" aria-label="Postęp quizu">
-            <div className="country-stat"><Flag size={19} /><span><strong>{foundIds.length}/{baseQuizItems.length}</strong><small>Poprawne odpowiedzi</small></span></div>
-            <div className="country-stat"><Clock3 size={19} /><span><strong>{formatTime(elapsedSeconds)}</strong><small>Czas</small></span></div>
-            <div className="country-stat"><Trophy size={19} /><span><strong>{Math.round(foundIds.length / baseQuizItems.length * 100)}%</strong><small>Ukończenie quizu</small></span></div>
+          <section className="quiz-stats" aria-label="Postęp quizu">
+            <div className="quiz-stat"><Flag size={19} /><span><strong>{foundIds.length}/{baseQuizItems.length}</strong><small>Poprawne odpowiedzi</small></span></div>
+            <div className="quiz-stat"><Clock3 size={19} /><span><strong>{formatTime(elapsedSeconds)}</strong><small>Czas</small></span></div>
+            <div className="quiz-stat"><Trophy size={19} /><span><strong>{Math.round(foundIds.length / baseQuizItems.length * 100)}%</strong><small>Ukończenie quizu</small></span></div>
           </section>
 
           <section className="capital-quiz-card">
@@ -187,7 +188,7 @@ function TypeCapitalPage() {
               <span className="eyebrow">PAŃSTWO</span>
               <h2>{current?.countryName ?? 'Brak państw w kolejce'}</h2>
             </div>
-            <div className="country-answer-card">
+            <div className="quiz-answer-card">
               <p>Wpisz nazwę stolicy. Wielkość liter i polskie znaki nie mają znaczenia.</p>
               <form onSubmit={submitAnswer}>
                 <label htmlFor="capital-answer">Nazwa stolicy</label>
@@ -199,8 +200,8 @@ function TypeCapitalPage() {
                 <span>{feedback?.text ?? 'Wpisz stolicę i naciśnij Enter lub przycisk.'}</span>
               </div>
               <div className="quiz-progress-track"><span style={{ width: `${foundIds.length / baseQuizItems.length * 100}%` }} /></div>
-              <button type="button" className="secondary-button capital-end-button" onClick={skipCurrent}>Pomiń — wróć do niego później</button>
-              <button type="button" className="secondary-button capital-end-button" onClick={() => saveResult('ended-early')}>Zakończ quiz</button>
+              <button type="button" className="secondary-button quiz-end-button" onClick={skipCurrent}>Pomiń — wróć do niego później</button>
+              <button type="button" className="secondary-button quiz-end-button" onClick={() => saveResult('ended-early')}>Zakończ quiz</button>
               <p className="quiz-result-note">Pominięte państwa wracają na koniec kolejki. Quiz kończy się po poprawnym podaniu wszystkich stolic lub po wybraniu „Zakończ quiz”.</p>
             </div>
           </section>

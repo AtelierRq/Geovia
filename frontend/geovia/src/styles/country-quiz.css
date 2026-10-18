@@ -1,69 +1,3 @@
-.country-quiz-page {
-  max-width: 1440px;
-  min-height: calc(100vh - 160px);
-  margin: 0 auto;
-  padding: 30px 48px 76px;
-}
-
-.country-quiz-back {
-  margin-bottom: 24px;
-}
-
-.country-quiz-heading {
-  max-width: 760px;
-  margin: 0 auto 28px;
-  text-align: center;
-}
-
-.country-quiz-heading h1 {
-  margin: 12px 0 10px;
-  font-size: clamp(34px, 4vw, 48px);
-  letter-spacing: -1.8px;
-}
-
-.country-quiz-heading p {
-  margin: 0;
-  color: var(--text-muted);
-  font-size: 16px;
-  line-height: 1.65;
-}
-
-.country-quiz-stats {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 16px;
-  margin: 0 0 22px;
-}
-
-.country-stat {
-  display: flex;
-  align-items: center;
-  gap: 13px;
-  min-width: 0;
-  padding: 17px 20px;
-  background: var(--white);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  color: var(--green);
-}
-
-.country-stat span {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
-
-.country-stat strong {
-  color: var(--text);
-  font-size: 21px;
-  line-height: 1.1;
-}
-
-.country-stat small {
-  color: var(--text-muted);
-  font-size: 12px;
-}
-
 .country-quiz-layout {
   display: grid;
   grid-template-columns: minmax(0, 1.65fr) minmax(280px, .85fr);
@@ -71,25 +5,12 @@
   align-items: start;
 }
 
-.europe-map-card, .country-answer-card {
-  min-width: 0;
-  background: var(--white);
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  overflow: hidden;
-}
-
 .europe-map-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 19px 22px;
+  padding: 4px 22px;
   border-bottom: 1px solid var(--border);
-}
-
-.europe-map-header h2, .country-answer-card h2 {
-  margin: 0;
-  font-size: 19px;
 }
 
 .europe-map-header span {
@@ -180,44 +101,6 @@
   background: #e7e9e2;
 }
 
-.country-answer-card {
-  padding: 24px;
-}
-
-.country-answer-card > p {
-  margin: 10px 0 22px;
-  color: var(--text-muted);
-  font-size: 13px;
-  line-height: 1.6;
-}
-
-.country-answer-card form {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.country-answer-card label {
-  font-size: 13px;
-  font-weight: 600;
-}
-
-.country-answer-card input {
-  width: 100%;
-  min-height: 46px;
-  padding: 11px 13px;
-  color: var(--text);
-  background: white;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  outline: none;
-}
-
-.country-answer-card input:focus {
-  border-color: var(--green);
-  box-shadow: 0 0 0 3px rgba(47, 107, 86, .12);
-}
-
 .country-submit {
   width: 100%;
   border: 0;
@@ -229,205 +112,28 @@
   cursor: not-allowed;
 }
 
-.quiz-feedback {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  min-height: 54px;
-  margin-top: 16px;
-  padding: 12px;
-  color: var(--text-muted);
-  background: #f5f6f2;
-  border-radius: 8px;
-  font-size: 13px;
-  line-height: 1.45;
-}
-
-.quiz-feedback svg {
-  flex-shrink: 0;
-}
-
-.feedback-success {
-  color: #216746;
-  background: #e7f3eb;
-}
-
-.feedback-error {
-  color: #9b3636;
-  background: #faeeee;
-}
-
-.feedback-info {
-  color: #725d19;
-  background: #faf4df;
-}
-
-.country-progress-track {
-  height: 7px;
-  margin: 18px 0 22px;
-  overflow: hidden;
-  background: #e7e9e2;
-  border-radius: 99px;
-}
-
-.country-progress-track span {
-  display: block;
-  height: 100%;
-  background: var(--green);
-  border-radius: inherit;
-  transition: width .25s ease;
-}
-
-.end-quiz-button {
-  width: 100%;
-  min-height: 44px;
-  color: var(--green-dark);
-  background: transparent;
-  border: 1px solid var(--border);
-  border-radius: 9px;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.end-quiz-button:hover {
-  background: var(--green-light);
-  border-color: var(--green);
-}
-
-.end-quiz-hint {
-  margin: 10px 0 0 !important;
-  font-size: 11px !important;
-  text-align: center;
-}
-
-.quiz-complete-banner {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-top: 20px;
-  padding: 18px 20px;
-  color: var(--green-dark);
-  background: var(--green-light);
-  border-radius: 12px;
-}
-
-.quiz-complete-banner span {
-  flex: 1;
-}
-
-.quiz-result-card {
-  max-width: 650px;
-  margin: 42px auto 20px;
-  padding: 42px;
-  text-align: center;
-  background: var(--white);
-  border: 1px solid var(--border);
-  border-radius: 18px;
-}
-
-.quiz-result-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 68px;
-  height: 68px;
-  margin: 0 auto 22px;
-  color: var(--green);
-  background: var(--green-light);
-  border-radius: 20px;
-}
-
-.quiz-result-card h1 {
-  margin: 14px 0;
-  font-size: clamp(28px, 4vw, 40px);
-  letter-spacing: -1px;
-}
-
-.quiz-result-score {
-  margin: 22px 0 8px;
-  color: var(--green);
-  font-size: 58px;
-  font-weight: 750;
-  letter-spacing: -2px;
-}
-
-.quiz-result-card p {
-  color: var(--text-muted);
-}
-
-.quiz-result-note {
-  margin: 22px 0;
-  font-size: 13px;
-  line-height: 1.6;
-}
-
-.quiz-result-actions {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 12px;
-  margin-top: 24px;
-}
-
-.quiz-result-actions .secondary-button {
-  border: 1px solid var(--border);
-}
-
 @media (max-width: 900px) { 
-  .country-quiz-page { 
-    padding: 26px 24px 60px;
-  } 
-
   .country-quiz-layout {
     grid-template-columns: 1fr;
-  } 
-
-  .country-answer-card { 
-    max-width: none;
   } 
 }
 
 @media (max-width: 560px) { 
-  .country-quiz-page { 
-    padding: 22px 16px 44px; 
-  } 
-  
-  .country-quiz-stats {
-    gap: 8px; 
-  } 
-  
-  .country-stat { 
-    padding: 12px 9px; 
-    gap: 7px;
-  } 
-  
-  .country-stat svg { 
-    width: 16px; 
-  } 
-  
-  .country-stat strong { 
-    font-size: 17px; 
-  } 
-  
-  .country-stat small { 
-    font-size: 10px; 
-  } 
-  
-  .country-answer-card { 
-    padding: 19px;
-  } 
-  
-  .quiz-result-card { 
-    margin-top: 24px; 
-    padding: 28px 18px; 
-  } 
-  
-  .quiz-complete-banner { 
-    flex-wrap: wrap; 
-  } 
 }
 
 .map-country:focus,
 .map-country:focus-visible {
   outline: none;
+}
+
+.europe-map-card {
+  min-width: 0;
+  overflow: hidden;
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+.europe-map-header {
+  background: var(--white);
 }
