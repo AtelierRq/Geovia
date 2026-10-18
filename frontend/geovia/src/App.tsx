@@ -7,11 +7,16 @@ import CategoryPage from './pages/CategoryPage'
 import NotFoundPage from './pages/NotFoundPage'
 import QuizModesPage from './pages/QuizModesPage'
 import QuizRoute from './pages/QuizRoute'
+import ProfilePage from './pages/ProfilePage'
+import AccountPage from './pages/AccountPage'
+import AuthPage from './pages/AuthPage'
+import { UserProvider } from './context/UserContext'
 import './App.css'
 
 function App() {
   return (
-    <BrowserRouter>
+    <UserProvider>
+      <BrowserRouter>
       <div className="app">
         <Navbar />
         <Routes>
@@ -20,11 +25,15 @@ function App() {
           <Route path="/categories/:categoryId" element={<CategoryPage />} />
           <Route path="/categories/:categoryId/areas/:areaId/modes" element={<QuizModesPage />} />
           <Route path="/quiz/:categoryId/:areaId/:modeId" element={<QuizRoute />} />
+          <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/profile/account" element={<AccountPage />} />
+          <Route path="/login" element={<AuthPage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
         <Footer />
       </div>
-    </BrowserRouter>
+      </BrowserRouter>
+    </UserProvider>
   )
 }
 
