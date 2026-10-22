@@ -128,7 +128,8 @@ function ProfilePage() {
           <Settings size={17} /> Ustawienia konta
         </Link>
       </section>
-      <section className="profile-user-card">
+      <div className="profile-overview-grid">
+        <section className="profile-user-card">
         <div className="profile-avatar">
           {user.avatar ? (
             <img src={user.avatar} alt="Zdjęcie profilowe" />
@@ -206,6 +207,7 @@ function ProfilePage() {
           )}
         </div>
       </section>
+      </div>
       <section className="profile-section">
         <div className="profile-section-heading">
           <div>
