@@ -4,6 +4,8 @@ export type DemoUser = {
   username: string
   email: string
   avatar: string | null
+  bio: string
+  city: string
 }
 
 type UserContextValue = {
@@ -18,7 +20,15 @@ const UserContext = createContext<UserContextValue | null>(null)
 
 function readUser(): DemoUser | null {
   try {
-    return JSON.parse(localStorage.getItem(USER_KEY) ?? 'null') as DemoUser | null
+    const value = JSON.parse(localStorage.getItem(USER_KEY) ?? "null") as Partial<DemoUser> | null;
+    if (!value) return null;
+    return {
+      username: value.username ?? "GeoviaUser",
+      email: value.email ?? "uzytkownik@example.com",
+      avatar: value.avatar ?? null,
+      bio: value.bio ?? "",
+      city: value.city ?? "",
+    };
   } catch {
     return null
   }
@@ -42,6 +52,8 @@ export function UserProvider({ children }: { children: ReactNode }) {
       username: 'GeoviaUser',
       email: 'uzytkownik@example.com',
       avatar: null,
+      bio: '',
+      city: '',
     }
 
     localStorage.setItem(USER_KEY, JSON.stringify(demoUser))

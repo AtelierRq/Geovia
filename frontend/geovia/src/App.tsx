@@ -9,6 +9,7 @@ import QuizModesPage from './pages/QuizModesPage'
 import QuizRoute from './pages/QuizRoute'
 import ProfilePage from './pages/ProfilePage'
 import AccountPage from './pages/AccountPage'
+import ProfileEditPage from './pages/ProfileEditPage'
 import AuthPage from './pages/AuthPage'
 import { UserProvider } from './context/UserContext'
 import './App.css'
@@ -26,6 +27,7 @@ function App() {
           <Route path="/categories/:categoryId/areas/:areaId/modes" element={<QuizModesPage />} />
           <Route path="/quiz/:categoryId/:areaId/:modeId" element={<QuizRoute />} />
           <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/profile/edit" element={<ProfileEditPage />} />
           <Route path="/profile/account" element={<AccountPage />} />
           <Route path="/login" element={<AuthPage />} />
           <Route path="*" element={<NotFoundPage />} />

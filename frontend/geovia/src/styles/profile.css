@@ -801,3 +801,244 @@
     font-size: 27px;
   }
 }
+
+
+/* ---------- Rozdzielone: edycja profilu i ustawienia konta ---------- */
+
+.profile-bio-preview {
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.account-form textarea {
+  width: 100%;
+  min-height: 100px;
+  padding: 11px 13px;
+  color: var(--text);
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  font: inherit;
+  font-weight: 400;
+  line-height: 1.5;
+  resize: vertical;
+  outline: none;
+}
+
+.account-form textarea:focus {
+  border-color: var(--green);
+  box-shadow: 0 0 0 3px rgb(47 107 86 / 12%);
+}
+
+.field-help {
+  margin-top: -3px;
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 400;
+}
+
+.label-with-icon {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.avatar-edit-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+.text-danger-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 0;
+  border: 0;
+  color: #9c514b;
+  background: transparent;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.text-danger-button:hover {
+  color: #7f302b;
+}
+
+.account-settings-layout {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+  gap: 18px;
+}
+
+.account-settings-card {
+  width: 100%;
+  max-width: none;
+  padding: 24px;
+}
+
+.settings-section-title {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.settings-icon {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  color: var(--green);
+  background: var(--green-light);
+  border-radius: 11px;
+}
+
+.settings-section-title h2 {
+  margin: 1px 0 6px;
+  font-size: 18px;
+}
+
+.settings-section-title p,
+.settings-description,
+.settings-option-row p,
+.account-logout-section p {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.account-settings-card .account-form {
+  padding-top: 0;
+}
+
+.account-settings-card .account-info-note {
+  margin-top: 0;
+}
+
+.account-settings-card button:disabled,
+.danger-outline-button:disabled {
+  opacity: 0.58;
+  cursor: not-allowed;
+}
+
+.account-settings-card > .secondary-button {
+  margin-top: 16px;
+  padding: 10px 13px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--green-dark);
+}
+
+.coming-soon-label {
+  display: inline-block;
+  margin-top: 10px;
+  color: var(--text-muted);
+  font-size: 11px;
+}
+
+.settings-option-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 15px 0;
+  border-top: 1px solid var(--border);
+}
+
+.settings-option-row strong {
+  font-size: 13px;
+}
+
+.settings-option-row .coming-soon-label {
+  flex: 0 0 auto;
+  margin-top: 2px;
+}
+
+.account-danger-card {
+  border-color: #ead6d2;
+}
+
+.danger-icon {
+  color: #9c514b;
+  background: #f8eae7;
+}
+
+.danger-outline-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 15px;
+  padding: 10px 13px;
+  border: 1px solid #d9b7b1;
+  border-radius: 9px;
+  color: #9c514b;
+  background: transparent;
+  font: inherit;
+  font-size: 13px;
+}
+
+.account-logout-section {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  margin-top: 20px;
+  padding: 22px 24px;
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 15px;
+}
+
+.account-logout-section h2 {
+  margin: 0 0 5px;
+  font-size: 17px;
+}
+
+.account-logout-section .account-logout-button {
+  flex: 0 0 auto;
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px solid #ead6d2;
+  border-radius: 9px;
+}
+
+.account-demo-footnote {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 16px 0 0;
+  color: var(--text-muted);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.account-demo-footnote svg {
+  flex: 0 0 auto;
+  margin-top: 2px;
+  color: var(--green);
+}
+
+@media (max-width: 760px) {
+  .account-settings-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 560px) {
+  .account-settings-card {
+    padding: 19px;
+  }
+
+  .settings-option-row,
+  .account-logout-section {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}

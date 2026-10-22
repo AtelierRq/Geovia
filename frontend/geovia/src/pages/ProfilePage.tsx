@@ -139,12 +139,13 @@ function ProfilePage() {
         </div>
         <div className="profile-user-info">
           <h2>{user.username}</h2>
-          <p>{user.email}</p>
+          {user.city && <p>{user.city}</p>}
+          {user.bio && <p className="profile-bio-preview">{user.bio}</p>}
           <span className="profile-local-note">
-            Profil demonstracyjny · dane zapisane w tej przeglądarce
+            Profil użytkownika
           </span>
         </div>
-        <Link to="/profile/account" className="profile-edit-link">
+        <Link to="/profile/edit" className="profile-edit-link">
           Edytuj profil <ArrowRight size={16} />
         </Link>
       </section>
