@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import {
   Activity,
   ArrowRight,
@@ -13,8 +13,34 @@ import {
   UserRound,
 } from "lucide-react";
 import { Link, Navigate } from "react-router-dom";
+import { ComposableMap, Geographies, Geography, ZoomableGroup } from "react-simple-maps";
+import worldData from "world-atlas/countries-50m.json";
 import { useUser } from "../context/UserContext";
+import { countries } from "../data/countries";
+import { getCapitalForCountry } from "../data/capitals";
+import { getCountryFlag } from "../data/countryFlags";
+import { calculateCountryKnowledge, getCountryKnowledgeStatusLabel, type CountryMapStatus, type KnowledgeStatus } from "../utils/countryKnowledge";
 import "../styles/profile.css";
+
+type KnowledgeElementKey = "name" | "capital" | "flag";
+
+const kosovoFeature = {
+  type: "Feature",
+  id: "383",
+  properties: { name: "Kosowo" },
+  geometry: {
+    type: "Polygon",
+    coordinates: [[
+      [20.76216, 42.05186], [20.71731, 41.84711], [20.59023, 41.85541],
+      [20.52295, 42.21787], [20.28374, 42.32025], [20.0707, 42.58863],
+      [20.25758, 42.81275], [20.49679, 42.88469], [20.63508, 43.21671],
+      [20.81448, 43.27205], [20.95651, 43.13094], [21.143395, 43.068685],
+      [21.27421, 42.90959], [21.43866, 42.86255], [21.63302, 42.67717],
+      [21.77505, 42.6827], [21.66292, 42.43922], [21.54332, 42.32025],
+      [21.576636, 42.245224], [21.3527, 42.2068], [20.76216, 42.05186],
+    ]],
+  },
+} as any;
 
 type QuizResult = {
   id: string;
@@ -109,10 +135,25 @@ function ProfilePage() {
         ) / results.length,
       )
     : 0;
-  const uniqueCountries = new Set(
-    results.flatMap((result) => result.foundCountries ?? []),
-  ).size;
   const lastResult = results[0];
+  const countryKnowledge = useMemo(() => calculateCountryKnowledge(results), [results]);
+  const knowledgeCounts = countryKnowledge.reduce(
+    (counts, item) => { counts[item.overall] += 1; return counts; },
+    { unknown: 0, "needs-work": 0, learning: 0, mastered: 0 } as Record<CountryMapStatus, number>,
+  );
+  const countryById = new Map(countries.map((country) => [country.id, country]));
+  const [selectedCountryId, setSelectedCountryId] = useState<string | null>(null);
+  const selectedKnowledge = selectedCountryId
+    ? countryKnowledge.find((item) => item.countryId === selectedCountryId)
+    : undefined;
+  const selectedCountry = selectedCountryId ? countryById.get(selectedCountryId) : undefined;
+  const mapFill = (status: CountryMapStatus) => ({
+    mastered: "#39966b",
+    learning: "#e9a23b",
+    "needs-work": "#d9655b",
+    unknown: "#d8dad5",
+  })[status];
+  const statusClass = (status: KnowledgeStatus | CountryMapStatus) => `knowledge-status knowledge-status--${status}`;
   return (
     <main className="profile-page">
       <section className="profile-heading">
@@ -217,27 +258,132 @@ function ProfilePage() {
           </div>
         </div>
         <div className="profile-feature-card knowledge-feature">
-          <div className="feature-icon">
-            <MapPinned size={25} />
-          </div>
+          <div className="feature-icon"><MapPinned size={25} /></div>
           <div className="profile-feature-copy">
             <h3>Twoja mapa wiedzy</h3>
-            <p>
-              Widzisz już {uniqueCountries} różnych państw zaliczonych w
-              zapisanych quizach. W kolejnym etapie rozbudujemy tę sekcję o mapę
-              oraz statusy „do nauki”, „w trakcie nauki” i „opanowane”.
-            </p>
-            <div className="knowledge-progress">
-              <span
-                style={{
-                  width: `${Math.min(100, (uniqueCountries / 197) * 100)}%`,
-                }}
-              />
+            <p>Wstępne podsumowanie znajomości państw na podstawie zapisanych quizów. Każdy element (nazwa, stolica, flaga) oceniany jest osobno.</p>
+          </div>
+          <div className="knowledge-map-content">
+            <div className="knowledge-status-summary">
+              {([['mastered', 'Opanowane'], ['learning', 'W trakcie nauki'], ['needs-work', 'Do nauki'], ['unknown', 'Brak danych']] as [CountryMapStatus, string][]).map(([status, label]) => (
+                <div className="knowledge-summary-item" key={status}>
+                  <span className={statusClass(status)} />
+                  <span>{label}</span>
+                  <strong>{knowledgeCounts[status]}</strong>
+                </div>
+              ))}
             </div>
-            <small>
-              {uniqueCountries} z 197 państw rozpoznanych w historii quizów — to
-              jeszcze nie jest ocena poziomu opanowania.
-            </small>
+            <div className="knowledge-map-layout">
+              <div className="knowledge-map-frame" aria-label="Interaktywna mapa znajomości państw. Wybierz państwo, aby zobaczyć szczegóły.">
+                <ComposableMap
+                  width={900}
+                  height={480}
+                  projection="geoMercator"
+                  projectionConfig={{ scale: 145, center: [10, 15] }}
+                  className="knowledge-world-map"
+                >
+                  <ZoomableGroup>
+                    <Geographies geography={worldData as unknown as string}>
+                      {({ geographies }) => geographies.map((geo) => {
+                        const mapId = String(geo.id).replace(/^0+/, "");
+                        const country = countries.find((item) => item.mapId.replace(/^0+/, "") === mapId);
+                        if (!country) return (
+                          <Geography key={geo.rsmKey} geography={geo} fill="#e8e8e2" stroke="#fffdf8" strokeWidth={0.45} style={{ default: { outline: "none" }, hover: { outline: "none" }, pressed: { outline: "none" } }} />
+                        );
+                        const knowledge = countryKnowledge.find((item) => item.countryId === country.id);
+                        const selected = selectedCountryId === country.id;
+                        return (
+                          <Geography
+                            key={geo.rsmKey}
+                            geography={geo}
+                            onClick={() => setSelectedCountryId(country.id)}
+                            fill={mapFill(knowledge?.overall ?? "unknown")}
+                            stroke={selected ? "#173d34" : "#fffdf8"}
+                            strokeWidth={selected ? 1.5 : 0.45}
+                            style={{
+                              default: { outline: "none", cursor: "pointer", transition: "fill 120ms ease" },
+                              hover: { outline: "none", cursor: "pointer", fill: "#8aa99b" },
+                              pressed: { outline: "none" },
+                            }}
+                            aria-label={country.name}
+                          />
+                        );
+                      })}
+                    </Geographies>
+                    <Geographies geography={{ type: "FeatureCollection", features: [kosovoFeature] } as any}>
+                      {({ geographies }) => geographies.map((geo) => {
+                        const knowledge = countryKnowledge.find((item) => item.countryId === "kosovo");
+                        const selected = selectedCountryId === "kosovo";
+                        return (
+                          <Geography
+                            key={geo.rsmKey}
+                            geography={geo}
+                            onClick={() => setSelectedCountryId("kosovo")}
+                            fill={mapFill(knowledge?.overall ?? "unknown")}
+                            stroke={selected ? "#173d34" : "#fffdf8"}
+                            strokeWidth={selected ? 1.5 : 0.6}
+                            style={{ default: { outline: "none", cursor: "pointer" }, hover: { outline: "none", cursor: "pointer", fill: "#8aa99b" }, pressed: { outline: "none" } }}
+                            aria-label="Kosowo"
+                          />
+                        );
+                      })}
+                    </Geographies>
+                  </ZoomableGroup>
+                </ComposableMap>
+              </div>
+              <div className="knowledge-map-details">
+                {selectedCountry && selectedKnowledge ? (
+                  <>
+                    <div className="knowledge-selected-heading">
+                      <span className={statusClass(selectedKnowledge.overall)} />
+                      <div className="knowledge-selected-title">
+                        <h3>{selectedCountry.name}</h3>
+                        <span>{getCountryKnowledgeStatusLabel(selectedKnowledge.overall)}</span>
+                      </div>
+                    </div>
+                    <div className="knowledge-country-facts">
+                      <div className="knowledge-country-fact">
+                        <span className="knowledge-country-fact-label">Stolica</span>
+                        <strong>{getCapitalForCountry(selectedCountry.id)?.name ?? "Brak danych"}</strong>
+                      </div>
+                      <div className="knowledge-country-fact knowledge-country-flag-fact">
+                        <span className="knowledge-country-fact-label">Flaga</span>
+                        <div className="knowledge-country-flag-slot">
+                          {getCountryFlag(selectedCountry.id) ? (
+                            <span className="knowledge-country-flag-frame">
+                              <img
+                                className="knowledge-country-flag"
+                                src={getCountryFlag(selectedCountry.id)!.imageUrl}
+                                alt={`Flaga państwa ${selectedCountry.name}`}
+                                loading="lazy"
+                              />
+                            </span>
+                          ) : (
+                            <span>Brak grafiki flagi</span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="knowledge-element-list">
+                      {([['name', 'Nazwa'], ['capital', 'Stolica'], ['flag', 'Flaga']] as [KnowledgeElementKey, string][]).map(([key, label]) => (
+                        <div className="knowledge-element-row" key={key}>
+                          <span>{label}</span>
+                          <span className="knowledge-element-status"><span className={statusClass(selectedKnowledge[key])} />{getCountryKnowledgeStatusLabel(selectedKnowledge[key])}</span>
+                        </div>
+                      ))}
+                    </div>
+                    <button type="button" className="knowledge-clear-selection" onClick={() => setSelectedCountryId(null)}>Wyczyść wybór</button>
+                  </>
+                ) : (
+                  <div className="knowledge-map-prompt">
+                    <MapPinned size={25} />
+                    <strong>Wybierz państwo</strong>
+                    <p>Kliknij państwo na mapie, aby sprawdzić status nazwy, stolicy i flagi.</p>
+                  </div>
+                )}
+              </div>
+            </div>
+            <small>Kliknij państwo na mapie, aby zobaczyć szczegółowe statusy. Flagi pozostają szare, dopóki nie będzie quizu z flagami.</small>
           </div>
         </div>
       </section>
