@@ -1199,6 +1199,10 @@
   max-height: 100%;
 }
 
+.knowledge-world-map path[aria-label]:hover {
+  fill: #8aa99b;
+}
+
 .knowledge-map-details {
   min-width: 0;
   height: 480px;
@@ -1229,6 +1233,7 @@
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
+  line-clamp: 2;
   overflow: hidden;
   overflow-wrap: anywhere;
   margin: 0 0 4px;

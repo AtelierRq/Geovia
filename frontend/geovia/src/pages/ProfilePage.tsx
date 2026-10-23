@@ -288,7 +288,7 @@ function ProfilePage() {
                         const mapId = String(geo.id).replace(/^0+/, "");
                         const country = countries.find((item) => item.mapId.replace(/^0+/, "") === mapId);
                         if (!country) return (
-                          <Geography key={geo.rsmKey} geography={geo} fill="#e8e8e2" stroke="#fffdf8" strokeWidth={0.45} style={{ default: { outline: "none" }, hover: { outline: "none" }, pressed: { outline: "none" } }} />
+                          <Geography key={geo.rsmKey} geography={geo} fill="#e8e8e2" stroke="#fffdf8" strokeWidth={0.45} style={{ outline: "none" }} />
                         );
                         const knowledge = countryKnowledge.find((item) => item.countryId === country.id);
                         const selected = selectedCountryId === country.id;
@@ -300,11 +300,7 @@ function ProfilePage() {
                             fill={mapFill(knowledge?.overall ?? "unknown")}
                             stroke={selected ? "#173d34" : "#fffdf8"}
                             strokeWidth={selected ? 1.5 : 0.45}
-                            style={{
-                              default: { outline: "none", cursor: "pointer", transition: "fill 120ms ease" },
-                              hover: { outline: "none", cursor: "pointer", fill: "#8aa99b" },
-                              pressed: { outline: "none" },
-                            }}
+                            style={{ outline: "none", cursor: "pointer", transition: "fill 120ms ease" }}
                             aria-label={country.name}
                           />
                         );
@@ -322,7 +318,7 @@ function ProfilePage() {
                             fill={mapFill(knowledge?.overall ?? "unknown")}
                             stroke={selected ? "#173d34" : "#fffdf8"}
                             strokeWidth={selected ? 1.5 : 0.6}
-                            style={{ default: { outline: "none", cursor: "pointer" }, hover: { outline: "none", cursor: "pointer", fill: "#8aa99b" }, pressed: { outline: "none" } }}
+                            style={{ outline: "none", cursor: "pointer", transition: "fill 120ms ease" }}
                             aria-label="Kosowo"
                           />
                         );
