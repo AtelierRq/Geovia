@@ -289,7 +289,7 @@ function ProfilePage() {
           <div className="feature-icon"><MapPinned size={25} /></div>
           <div className="profile-feature-copy">
             <h3>Twoja mapa wiedzy</h3>
-            <p>Wstępne podsumowanie znajomości państw na podstawie zapisanych quizów. Każdy element (nazwa, stolica, flaga) oceniany jest osobno.</p>
+            <p>Wstępne podsumowanie znajomości państw na podstawie zapisanych quizów. Każdy element (nazwa, stolica, flaga) oceniany jest osobno. Do podsumowania wykorzystywane są trzy ostatnio rozegrane quizy z każdej z trzech kategorii.</p>
           </div>
           <div className="knowledge-map-content">
             <div className="knowledge-status-summary">
