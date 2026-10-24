@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Activity,
   ArrowRight,
@@ -7,6 +7,8 @@ import {
   Clock3,
   History,
   MapPinned,
+  Plus,
+  Minus,
   Settings,
   Trophy,
   Users,
@@ -143,6 +145,26 @@ function ProfilePage() {
   );
   const countryById = new Map(countries.map((country) => [country.id, country]));
   const [selectedCountryId, setSelectedCountryId] = useState<string | null>(null);
+  const [mapZoom, setMapZoom] = useState(1);
+  const [mapCenter, setMapCenter] = useState<[number, number]>([10, 15]);
+  const mapFrameRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const mapFrame = mapFrameRef.current;
+    if (!mapFrame) return;
+
+    // A native, non-passive listener is required so preventDefault() still
+    // blocks page scrolling when the map reaches either zoom limit.
+    const handleWheel = (event: WheelEvent) => {
+      event.preventDefault();
+      setMapZoom((current) =>
+        Math.min(20, Math.max(1, current * (event.deltaY < 0 ? 1.2 : 1 / 1.2))),
+      );
+    };
+
+    mapFrame.addEventListener("wheel", handleWheel, { passive: false });
+    return () => mapFrame.removeEventListener("wheel", handleWheel);
+  }, []);
   const selectedKnowledge = selectedCountryId
     ? countryKnowledge.find((item) => item.countryId === selectedCountryId)
     : undefined;
@@ -274,7 +296,19 @@ function ProfilePage() {
               ))}
             </div>
             <div className="knowledge-map-layout">
-              <div className="knowledge-map-frame" aria-label="Interaktywna mapa znajomości państw. Wybierz państwo, aby zobaczyć szczegóły.">
+              <div
+                ref={mapFrameRef}
+                className="knowledge-map-frame"
+                aria-label="Interaktywna mapa znajomości państw. Wybierz państwo, aby zobaczyć szczegóły."
+              >
+                <div className="knowledge-map-zoom-controls" aria-label="Sterowanie powiększeniem mapy">
+                  <button type="button" aria-label="Powiększ mapę" onClick={() => setMapZoom((current) => Math.min(20, current * 1.25))}>
+                    <Plus size={17} />
+                  </button>
+                  <button type="button" aria-label="Pomniejsz mapę" onClick={() => setMapZoom((current) => Math.max(1, current / 1.25))}>
+                    <Minus size={17} />
+                  </button>
+                </div>
                 <ComposableMap
                   width={900}
                   height={480}
@@ -282,7 +316,18 @@ function ProfilePage() {
                   projectionConfig={{ scale: 145, center: [10, 15] }}
                   className="knowledge-world-map"
                 >
-                  <ZoomableGroup>
+                  <ZoomableGroup
+                    center={mapCenter}
+                    zoom={mapZoom}
+                    minZoom={1}
+                    maxZoom={20}
+                    onMoveEnd={({ coordinates, zoom }) => {
+                      if (Array.isArray(coordinates)) {
+                        setMapCenter(coordinates as [number, number]);
+                      }
+                      if (typeof zoom === "number") setMapZoom(zoom);
+                    }}
+                  >
                     <Geographies geography={worldData as unknown as string}>
                       {({ geographies }) => geographies.map((geo) => {
                         const mapId = String(geo.id).replace(/^0+/, "");
@@ -298,8 +343,8 @@ function ProfilePage() {
                             geography={geo}
                             onClick={() => setSelectedCountryId(country.id)}
                             fill={mapFill(knowledge?.overall ?? "unknown")}
-                            stroke={selected ? "#173d34" : "#fffdf8"}
-                            strokeWidth={selected ? 1.5 : 0.45}
+                            stroke={selected ? "#173d34" : "#171a18"}
+                            strokeWidth={selected ? Math.max(0.22, 0.85 / Math.pow(mapZoom, 0.62)) : Math.max(0.12, 0.65 / Math.pow(mapZoom, 0.62))}
                             style={{ outline: "none", cursor: "pointer", transition: "fill 120ms ease" }}
                             aria-label={country.name}
                           />
@@ -316,8 +361,8 @@ function ProfilePage() {
                             geography={geo}
                             onClick={() => setSelectedCountryId("kosovo")}
                             fill={mapFill(knowledge?.overall ?? "unknown")}
-                            stroke={selected ? "#173d34" : "#fffdf8"}
-                            strokeWidth={selected ? 1.5 : 0.6}
+                            stroke={selected ? "#173d34" : "#171a18"}
+                            strokeWidth={selected ? Math.max(0.22, 0.85 / Math.pow(mapZoom, 0.62)) : Math.max(0.12, 0.65 / Math.pow(mapZoom, 0.62))}
                             style={{ outline: "none", cursor: "pointer", transition: "fill 120ms ease" }}
                             aria-label="Kosowo"
                           />

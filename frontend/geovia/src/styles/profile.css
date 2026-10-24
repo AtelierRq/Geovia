@@ -1181,6 +1181,7 @@
 }
 
 .knowledge-map-frame {
+  position: relative;
   min-width: 0;
   height: 480px;
   overflow: hidden;
@@ -1190,6 +1191,40 @@
   border: 1px solid var(--border-color, #e0dfd6);
   border-radius: 14px;
   background: #f7f6f0;
+}
+
+
+.knowledge-map-zoom-controls {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--border-color, #d8d8cf);
+  border-radius: 8px;
+  background: var(--surface, #fffdf8);
+  box-shadow: 0 2px 8px rgb(0 0 0 / 10%);
+}
+
+.knowledge-map-zoom-controls button {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  border: 0;
+  background: transparent;
+  color: var(--text-primary, #173d34);
+  cursor: pointer;
+}
+
+.knowledge-map-zoom-controls button + button {
+  border-top: 1px solid var(--border-color, #d8d8cf);
+}
+
+.knowledge-map-zoom-controls button:hover {
+  background: var(--surface-muted, #e8eee8);
 }
 
 .knowledge-world-map {
@@ -1315,6 +1350,7 @@
   }
 
   .knowledge-map-frame {
+  position: relative;
     height: 420px;
   }
 

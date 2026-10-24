@@ -36,38 +36,47 @@
 
 .map-zoom-controls {
   position: absolute;
-  top: 14px;
-  right: 14px;
-  z-index: 2;
+  top: 12px;
+  right: 12px;
+  z-index: 5;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  overflow: hidden;
+  border: 1px solid var(--border-color, #d8d8cf);
+  border-radius: 8px;
+  background: var(--surface, #fffdf8);
+  box-shadow: 0 2px 8px rgb(0 0 0 / 10%);
 }
 
 .map-zoom-controls button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
+  display: grid;
+  width: 34px;
+  height: 34px;
   padding: 0;
-  color: var(--green-dark);
-  background: var(--white);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(35, 61, 52, 0.12);
+  place-items: center;
+  border: 0;
+  background: transparent;
+  color: var(--text-primary, #173d34);
   cursor: pointer;
 }
 
+.map-zoom-controls button + button {
+  border-top: 1px solid var(--border-color, #d8d8cf);
+}
+
 .map-zoom-controls button:hover {
-  color: white;
-  background: var(--green);
+  background: var(--surface-muted, #e8eee8);
 }
 
 .map-wrap svg {
   display: block;
   width: 100%;
   height: auto;
+}
+
+.map-zoom-controls svg {
+  width: 16px;
+  height: 16px;
 }
 
 .map-legend {

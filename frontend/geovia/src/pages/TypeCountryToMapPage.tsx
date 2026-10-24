@@ -193,10 +193,10 @@ function TypeCountryToMapPage() {
               >
                 <div className="map-zoom-controls" aria-label="Sterowanie powiększeniem mapy">
                   <button type="button" aria-label="Powiększ mapę" onClick={() => setMapZoom((current) => Math.min(20, current * 1.25))}>
-                    <Plus size={17} />
+                    <Plus size={16} />
                   </button>
                   <button type="button" aria-label="Pomniejsz mapę" onClick={() => setMapZoom((current) => Math.max(1, current / 1.25))}>
-                    <Minus size={17} />
+                    <Minus size={16} />
                   </button>
                 </div>
                 <ComposableMap projection="geoMercator" projectionConfig={{ center: mapCenter, scale: projectionScale }} width={800} height={560}>
