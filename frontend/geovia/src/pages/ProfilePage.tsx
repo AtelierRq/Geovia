@@ -342,7 +342,6 @@ function ProfilePage() {
                           <Geography key={geo.rsmKey} geography={geo} fill="#e8e8e2" stroke="#fffdf8" strokeWidth={0.45} style={{ outline: "none" }} />
                         );
                         const knowledge = countryKnowledge.find((item) => item.countryId === country.id);
-                        const selected = selectedCountryId === country.id;
                         return (
                           <Geography
                             key={geo.rsmKey}
@@ -360,7 +359,6 @@ function ProfilePage() {
                     <Geographies geography={{ type: "FeatureCollection", features: [kosovoFeature] } as any}>
                       {({ geographies }) => geographies.map((geo) => {
                         const knowledge = countryKnowledge.find((item) => item.countryId === "kosovo");
-                        const selected = selectedCountryId === "kosovo";
                         return (
                           <Geography
                             key={geo.rsmKey}
