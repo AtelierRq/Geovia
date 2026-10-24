@@ -343,8 +343,8 @@ function ProfilePage() {
                             geography={geo}
                             onClick={() => setSelectedCountryId(country.id)}
                             fill={mapFill(knowledge?.overall ?? "unknown")}
-                            stroke={selected ? "#173d34" : "#171a18"}
-                            strokeWidth={selected ? Math.max(0.22, 0.85 / Math.pow(mapZoom, 0.62)) : Math.max(0.12, 0.65 / Math.pow(mapZoom, 0.62))}
+                            stroke="#171a18"
+                            strokeWidth={Math.max(0.12, 0.65 / Math.pow(mapZoom, 0.62))}
                             style={{ outline: "none", cursor: "pointer", transition: "fill 120ms ease" }}
                             aria-label={country.name}
                           />
@@ -361,8 +361,8 @@ function ProfilePage() {
                             geography={geo}
                             onClick={() => setSelectedCountryId("kosovo")}
                             fill={mapFill(knowledge?.overall ?? "unknown")}
-                            stroke={selected ? "#173d34" : "#171a18"}
-                            strokeWidth={selected ? Math.max(0.22, 0.85 / Math.pow(mapZoom, 0.62)) : Math.max(0.12, 0.65 / Math.pow(mapZoom, 0.62))}
+                            stroke="#171a18"
+                            strokeWidth={Math.max(0.12, 0.65 / Math.pow(mapZoom, 0.62))}
                             style={{ outline: "none", cursor: "pointer", transition: "fill 120ms ease" }}
                             aria-label="Kosowo"
                           />

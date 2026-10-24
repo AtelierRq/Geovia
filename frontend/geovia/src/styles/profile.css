@@ -1191,6 +1191,11 @@
   border: 1px solid var(--border-color, #e0dfd6);
   border-radius: 14px;
   background: #f7f6f0;
+  cursor: grab;
+}
+
+.knowledge-map-frame:active {
+  cursor: grabbing;
 }
 
 
