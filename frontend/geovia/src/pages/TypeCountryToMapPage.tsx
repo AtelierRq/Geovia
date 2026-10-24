@@ -25,6 +25,12 @@ type SavedQuizResult = {
 
 const RESULTS_KEY = 'geovia.quizResults'
 
+// Dodatkowe geometrie, które w quizie zaliczamy razem z państwem nadrzędnym.
+const MAP_ID_ALIASES: Record<string, string> = {
+  '304': 'denmark', // Grenlandia -> Dania
+  '732': 'morocco', // Sahara Zachodnia -> Maroko
+}
+
 // World-atlas 50m does not provide Kosovo as a separate country geometry,
 // so we render its boundary as a dedicated GeoJSON feature.
 const kosovoFeature = {
@@ -217,7 +223,7 @@ function TypeCountryToMapPage() {
                         <>
                           {geographies.map((geo) => {
                             const mapId = String(geo.id).replace(/^0+/, '')
-                            const country = quizCountries.find((item) => item.mapId.replace(/^0+/, '') === mapId)
+                            const country = quizCountries.find((item) => item.mapId.replace(/^0+/, '') === mapId || item.id === MAP_ID_ALIASES[mapId])
                             const isFound = country ? foundSet.has(country.id) : false
                             return (
                               <Geography

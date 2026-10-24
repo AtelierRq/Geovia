@@ -26,6 +26,12 @@ import "../styles/profile.css";
 
 type KnowledgeElementKey = "name" | "capital" | "flag";
 
+// Dodatkowe geometrie przypisane do państwa nadrzędnego na mapie świata.
+const MAP_ID_ALIASES: Record<string, string> = {
+  "304": "denmark", // Grenlandia -> Dania
+  "732": "morocco", // Sahara Zachodnia -> Maroko
+};
+
 const kosovoFeature = {
   type: "Feature",
   id: "383",
@@ -331,7 +337,7 @@ function ProfilePage() {
                     <Geographies geography={worldData as unknown as string}>
                       {({ geographies }) => geographies.map((geo) => {
                         const mapId = String(geo.id).replace(/^0+/, "");
-                        const country = countries.find((item) => item.mapId.replace(/^0+/, "") === mapId);
+                        const country = countries.find((item) => item.mapId.replace(/^0+/, "") === mapId || item.id === MAP_ID_ALIASES[mapId]);
                         if (!country) return (
                           <Geography key={geo.rsmKey} geography={geo} fill="#e8e8e2" stroke="#fffdf8" strokeWidth={0.45} style={{ outline: "none" }} />
                         );
