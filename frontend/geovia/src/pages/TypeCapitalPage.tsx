@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type FormEvent } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import { ArrowLeft, CheckCircle2, Clock3, Flag, Trophy, XCircle } from 'lucide-react'
 import { Link, useParams } from 'react-router-dom'
 import { categories } from '../data/categories'
