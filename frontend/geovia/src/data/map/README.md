@@ -1,14 +1,18 @@
 # Geovia map data
 
-`geoviaWorldCountries.json` is generated from `world-atlas/countries-50m.json` (Natural Earth-derived data).
-The generator merges Morocco (ISO numeric ID 504) and Western Sahara (732) into a single MultiPolygon feature for filling and hit-testing, while preserving other country features.
+The map data is generated from `world-atlas/countries-50m.json` (Natural Earth-derived data).
 
-`geoviaWorldBorders.json` is a separate line layer generated from the same topology. Internal boundaries are omitted where adjacent source geometries map to the same canonical quiz country.
+`geoviaWorldCountries.json` is the fill/hit-testing layer. The generator combines these source geometries into one quiz feature:
+- Morocco + Western Sahara -> Morocco (`504`)
+- Somalia + Somaliland -> Somalia (`706`)
+- Cyprus + North Cyprus -> Cyprus (`196`)
 
-Regenerate both files from the frontend root with:
+`geoviaWorldBorders.json` is a separate shared-border layer. The generator omits internal borders where adjacent source geometries map to the same canonical quiz country. Both map pages use these generated layers.
+
+Regenerate from the frontend root:
 
 ```bash
 npm run build:map-data
 ```
 
-This is an app-specific simplification for quiz behavior, not a statement about political status or sovereignty.
+These merges are app-specific quiz/map behavior and do not assert political status or sovereignty.
