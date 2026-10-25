@@ -16,7 +16,8 @@ import {
 } from "lucide-react";
 import { Link, Navigate } from "react-router-dom";
 import { ComposableMap, Geographies, Geography, ZoomableGroup } from "react-simple-maps";
-import worldData from "world-atlas/countries-50m.json";
+import geoviaWorldCountries from "../data/map/geoviaWorldCountries.json";
+import geoviaWorldBorders from "../data/map/geoviaWorldBorders.json";
 import { useUser } from "../context/UserContext";
 import { countries } from "../data/countries";
 import { getCapitalForCountry } from "../data/capitals";
@@ -334,12 +335,12 @@ function ProfilePage() {
                       if (typeof zoom === "number") setMapZoom(zoom);
                     }}
                   >
-                    <Geographies geography={worldData as unknown as string}>
+                    <Geographies geography={geoviaWorldCountries as any}>
                       {({ geographies }) => geographies.map((geo) => {
                         const mapId = String(geo.id).replace(/^0+/, "");
                         const country = countries.find((item) => item.mapId.replace(/^0+/, "") === mapId || item.id === MAP_ID_ALIASES[mapId]);
                         if (!country) return (
-                          <Geography key={geo.rsmKey} geography={geo} fill="#e8e8e2" stroke="#fffdf8" strokeWidth={0.45} style={{ outline: "none" }} />
+                          <Geography key={geo.rsmKey} geography={geo} fill="#e8e8e2" stroke="none" strokeWidth={0} style={{ outline: "none" }} />
                         );
                         const knowledge = countryKnowledge.find((item) => item.countryId === country.id);
                         return (
@@ -348,13 +349,25 @@ function ProfilePage() {
                             geography={geo}
                             onClick={() => setSelectedCountryId(country.id)}
                             fill={mapFill(knowledge?.overall ?? "unknown")}
-                            stroke="#171a18"
-                            strokeWidth={Math.max(0.12, 0.65 / Math.pow(mapZoom, 0.62))}
+                            stroke="none"
+                            strokeWidth={0}
                             style={{ outline: "none", cursor: "pointer", transition: "fill 120ms ease" }}
                             aria-label={country.name}
                           />
                         );
                       })}
+                    </Geographies>
+                    <Geographies geography={geoviaWorldBorders as any}>
+                      {({ geographies }) => geographies.map((geo) => (
+                        <Geography
+                          key={geo.rsmKey}
+                          geography={geo}
+                          fill="none"
+                          stroke="#171a18"
+                          strokeWidth={Math.max(0.12, 0.65 / Math.pow(mapZoom, 0.62))}
+                          style={{ outline: "none", pointerEvents: "none" }}
+                        />
+                      ))}
                     </Geographies>
                     <Geographies geography={{ type: "FeatureCollection", features: [kosovoFeature] } as any}>
                       {({ geographies }) => geographies.map((geo) => {
@@ -365,8 +378,8 @@ function ProfilePage() {
                             geography={geo}
                             onClick={() => setSelectedCountryId("kosovo")}
                             fill={mapFill(knowledge?.overall ?? "unknown")}
-                            stroke="#171a18"
-                            strokeWidth={Math.max(0.12, 0.65 / Math.pow(mapZoom, 0.62))}
+                            stroke="none"
+                            strokeWidth={0}
                             style={{ outline: "none", cursor: "pointer", transition: "fill 120ms ease" }}
                             aria-label="Kosowo"
                           />

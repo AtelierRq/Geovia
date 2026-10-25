@@ -141,7 +141,7 @@ const capitalNames: Record<string, { name: string; aliases?: string[] }> = {
   'oman': { name: 'Maskat', aliases: ['Muskat'] },
   'pakistan': { name: 'Islamabad' },
   'palau': { name: 'Ngerulmud' },
-  'palestine': { name: 'Ramallah', aliases: ['Jerozolima Wschodnia'] },
+  'palestine': { name: 'Ramallah', aliases: ['Jerozolima Wschodnia', 'Jerozolima',] },
   'panama': { name: 'Panama', aliases: ['Panama City'] },
   'papua-new-guinea': { name: 'Port Moresby' },
   'paraguay': { name: 'Asunción', aliases: ['Asuncion'] },

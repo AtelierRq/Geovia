@@ -2,7 +2,8 @@ import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { ArrowLeft, CheckCircle2, Clock3, Flag, Minus, Plus, Trophy, XCircle } from 'lucide-react'
 import { Link, useParams } from 'react-router-dom'
 import { ComposableMap, Geographies, Geography, ZoomableGroup } from 'react-simple-maps'
-import worldData from 'world-atlas/countries-50m.json'
+import geoviaWorldCountries from '../data/map/geoviaWorldCountries.json'
+import geoviaWorldBorders from '../data/map/geoviaWorldBorders.json'
 import { categories } from '../data/categories'
 import { areas } from '../data/areas'
 import { getCountriesByContinent, countries, normalizeCountryName } from '../data/countries'
@@ -218,7 +219,7 @@ function TypeCountryToMapPage() {
                       }
                     }}
                   >
-                    <Geographies geography={worldData as unknown as string}>
+                    <Geographies geography={geoviaWorldCountries as any}>
                       {({ geographies }) => (
                         <>
                           {geographies.map((geo) => {
@@ -230,8 +231,8 @@ function TypeCountryToMapPage() {
                                 key={geo.rsmKey}
                                 geography={geo}
                                 fill={isFound ? '#68a889' : '#e7e9e2'}
-                                stroke="#9daaa1"
-                                strokeWidth={Math.max(0.12, 0.65 / Math.pow(mapZoom, 0.62))}
+                                stroke="none"
+                                strokeWidth={0}
                                 style={{ outline: 'none', pointerEvents: 'none' }}
                                 className="map-country"
                               />
@@ -239,6 +240,18 @@ function TypeCountryToMapPage() {
                           })}
                         </>
                       )}
+                    </Geographies>
+                    <Geographies geography={geoviaWorldBorders as any}>
+                      {({ geographies }) => geographies.map((geo) => (
+                        <Geography
+                          key={geo.rsmKey}
+                          geography={geo}
+                          fill="none"
+                          stroke="#9daaa1"
+                          strokeWidth={Math.max(0.12, 0.65 / Math.pow(mapZoom, 0.62))}
+                          style={{ outline: 'none', pointerEvents: 'none' }}
+                        />
+                      ))}
                     </Geographies>
                     {/* Kosovo is rendered in its own FeatureCollection because it is not
                         a separate feature in the world-atlas country topology. */}
