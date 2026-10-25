@@ -8,6 +8,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { feature, mesh, merge } from 'topojson-client';
 import world from 'world-atlas/countries-50m.json' with { type: 'json' };
+import kosovoSource from '../src/data/map/geoviaKosovoSerbia.json' with { type: 'json' };
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -81,9 +82,13 @@ const removedFeatureKeys = new Set(
   ),
 );
 const mergedFeatures = mergeGroups.map(mergeCountry);
+const kosovoFeature = kosovoSource.features.find((item) => item.properties?.name === 'Kosovo');
+const clippedSerbiaFeature = kosovoSource.features.find((item) => item.properties?.name === 'Serbia');
+if (!kosovoFeature || !clippedSerbiaFeature) throw new Error('Kosovo source must include Kosovo and clipped Serbia features.');
 const fillFeatures = sourceFeatures
   .filter((item) => !removedFeatureKeys.has(`${item.id ?? ''}|${item.properties?.name ?? ''}`))
-  .concat(mergedFeatures);
+  .map((item) => item.properties?.name === 'Serbia' ? clippedSerbiaFeature : item)
+  .concat(mergedFeatures, [kosovoFeature]);
 const fillOutput = { type: 'FeatureCollection', features: fillFeatures };
 const fillDestination = path.resolve(__dirname, '../src/data/map/geoviaWorldCountries.json');
 fs.writeFileSync(fillDestination, `${JSON.stringify(fillOutput)}\n`);
@@ -94,6 +99,7 @@ const borders = mesh(
   world.objects.countries,
   (a, b) => canonicalId(a) !== canonicalId(b),
 );
+const kosovoBoundary = { type: 'Feature', properties: { name: 'Kosovo boundary' }, geometry: { type: 'LineString', coordinates: kosovoFeature.geometry.coordinates[0][0] ? kosovoFeature.geometry.coordinates[0] : kosovoFeature.geometry.coordinates } };
 
 // mesh() returns GeoJSON coordinates, not TopoJSON delta-encoded arcs. Store it
 // as GeoJSON FeatureCollection so react-simple-maps renders the exact linework.
@@ -106,7 +112,7 @@ const output = {
       purpose: 'Borders excluding internal boundaries between areas mapped to the same quiz country',
     },
     geometry: borders,
-  }],
+  }, kosovoBoundary],
 };
 
 const destination = path.resolve(__dirname, '../src/data/map/geoviaWorldBorders.json');

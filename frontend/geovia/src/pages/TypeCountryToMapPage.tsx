@@ -32,26 +32,6 @@ const MAP_ID_ALIASES: Record<string, string> = {
   '732': 'morocco', // Sahara Zachodnia -> Maroko
 }
 
-// World-atlas 50m does not provide Kosovo as a separate country geometry,
-// so we render its boundary as a dedicated GeoJSON feature.
-const kosovoFeature = {
-  type: 'Feature',
-  id: '383',
-  properties: { name: 'Kosowo' },
-  geometry: {
-    type: 'Polygon',
-    coordinates: [[
-      [20.76216, 42.05186], [20.71731, 41.84711], [20.59023, 41.85541],
-      [20.52295, 42.21787], [20.28374, 42.32025], [20.0707, 42.58863],
-      [20.25758, 42.81275], [20.49679, 42.88469], [20.63508, 43.21671],
-      [20.81448, 43.27205], [20.95651, 43.13094], [21.143395, 43.068685],
-      [21.27421, 42.90959], [21.43866, 42.86255], [21.63302, 42.67717],
-      [21.77505, 42.6827], [21.66292, 42.43922], [21.54332, 42.32025],
-      [21.576636, 42.245224], [21.3527, 42.2068], [20.76216, 42.05186],
-    ]],
-  },
-} as any
-
 function formatTime(seconds: number) {
   const minutes = Math.floor(seconds / 60).toString().padStart(2, '0')
   const remainingSeconds = (seconds % 60).toString().padStart(2, '0')
@@ -250,26 +230,6 @@ function TypeCountryToMapPage() {
                           stroke="#9daaa1"
                           strokeWidth={Math.max(0.12, 0.65 / Math.pow(mapZoom, 0.62))}
                           style={{ outline: 'none', pointerEvents: 'none' }}
-                        />
-                      ))}
-                    </Geographies>
-                    {/* Kosovo is rendered in its own FeatureCollection because it is not
-                        a separate feature in the world-atlas country topology. */}
-                    <Geographies
-                      geography={{
-                        type: 'FeatureCollection',
-                        features: [kosovoFeature],
-                      } as any}
-                    >
-                      {({ geographies }) => geographies.map((geo) => (
-                        <Geography
-                          key={geo.rsmKey}
-                          geography={geo}
-                          fill={foundSet.has('kosovo') ? '#68a889' : '#e7e9e2'}
-                          stroke="#9daaa1"
-                          strokeWidth={Math.max(0.12, 0.65 / Math.pow(mapZoom, 0.62))}
-                          style={{ outline: 'none', pointerEvents: 'none' }}
-                          className="map-country"
                         />
                       ))}
                     </Geographies>

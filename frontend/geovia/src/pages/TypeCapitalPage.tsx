@@ -59,7 +59,6 @@ function TypeCapitalPage() {
   const current = remainingItems[0]
   const elapsedSeconds = startedAt === null ? 0 : Math.floor((now - startedAt) / 1000)
   const isEnded = endedResult !== null
-  const foundSet = useMemo(() => new Set(foundIds), [foundIds])
 
   useEffect(() => {
     if (startedAt === null || isEnded) return
