@@ -19,6 +19,8 @@ const aliases = {
   '732': '504', // Western Sahara -> Morocco
 };
 const normalizedId = (id) => String(id ?? '').replace(/^0+/, '');
+const isSourceKosovo = (geometry) =>
+  String(geometry.properties?.name ?? '').trim().toLowerCase() === 'kosovo';
 const canonicalId = (geometry) => {
   const id = normalizedId(geometry.id);
   if (id && aliases[id]) return aliases[id];
@@ -85,21 +87,46 @@ const mergedFeatures = mergeGroups.map(mergeCountry);
 const kosovoFeature = kosovoSource.features.find((item) => item.properties?.name === 'Kosovo');
 const clippedSerbiaFeature = kosovoSource.features.find((item) => item.properties?.name === 'Serbia');
 if (!kosovoFeature || !clippedSerbiaFeature) throw new Error('Kosovo source must include Kosovo and clipped Serbia features.');
+// Keep the original Serbia polygon underneath Kosovo as a fill-only safety net.
+// The corrected Serbia geometry is used for border generation, but small coordinate
+// differences between it and the Kosovo polygon must not expose the map background.
+// Replace BOTH original Balkan features from world-atlas. The source dataset
+// already contains a Kosovo feature (without an id), so merely appending our corrected Kosovo
+// creates two independently filled Kosovo polygons. That mismatch is the source
+// of the white slivers. Serbia must also be replaced by its clipped counterpart.
+const replacedBalkanIds = new Set(['688', '383']); // Serbia, Kosovo
 const fillFeatures = sourceFeatures
-  .filter((item) => !removedFeatureKeys.has(`${item.id ?? ''}|${item.properties?.name ?? ''}`))
-  .map((item) => item.properties?.name === 'Serbia' ? clippedSerbiaFeature : item)
-  .concat(mergedFeatures, [kosovoFeature]);
+  .filter((item) =>
+    !removedFeatureKeys.has(`${item.id ?? ''}|${item.properties?.name ?? ''}`)
+    && !replacedBalkanIds.has(normalizedId(item.id))
+    && !isSourceKosovo(item)
+  )
+  .concat(mergedFeatures, [clippedSerbiaFeature, kosovoFeature]);
 const fillOutput = { type: 'FeatureCollection', features: fillFeatures };
 const fillDestination = path.resolve(__dirname, '../src/data/map/geoviaWorldCountries.json');
 fs.writeFileSync(fillDestination, `${JSON.stringify(fillOutput)}\n`);
 console.log(`Wrote ${fillDestination} (${fillFeatures.length} features; merged Morocco, Somalia, Cyprus groups)`);
 
+// Exclude BOTH original Serbia and Kosovo from the source mesh. The source
+// topology's Kosovo border otherwise remains in the global mesh while the
+// corrected Kosovo outline is added below, producing doubled/misaligned strokes.
+// Add the corrected Balkan linework once, matching the replacement fill features.
 const borders = mesh(
   world,
   world.objects.countries,
-  (a, b) => canonicalId(a) !== canonicalId(b),
+  (a, b) => canonicalId(a) !== canonicalId(b)
+    && !['688', '383'].includes(normalizedId(a.id))
+    && !['688', '383'].includes(normalizedId(b.id))
+    && !isSourceKosovo(a)
+    && !isSourceKosovo(b),
 );
-const kosovoBoundary = { type: 'Feature', properties: { name: 'Kosovo boundary' }, geometry: { type: 'LineString', coordinates: kosovoFeature.geometry.coordinates[0][0] ? kosovoFeature.geometry.coordinates[0] : kosovoFeature.geometry.coordinates } };
+const correctedBalkanBoundaries = {
+  type: 'MultiLineString',
+  coordinates: [
+    ...clippedSerbiaFeature.geometry.coordinates,
+    ...kosovoFeature.geometry.coordinates,
+  ],
+};
 
 // mesh() returns GeoJSON coordinates, not TopoJSON delta-encoded arcs. Store it
 // as GeoJSON FeatureCollection so react-simple-maps renders the exact linework.
@@ -108,11 +135,15 @@ const output = {
   features: [{
     type: 'Feature',
     properties: {
-      source: 'world-atlas / Natural Earth-derived 1:50m',
-      purpose: 'Borders excluding internal boundaries between areas mapped to the same quiz country',
+      source: 'world-atlas / Natural Earth-derived 1:50m plus corrected Kosovo/Serbia geometry',
+      purpose: 'Borders excluding internal boundaries between areas mapped to the same quiz country; Serbia original outline replaced',
     },
     geometry: borders,
-  }, kosovoBoundary],
+  }, {
+    type: 'Feature',
+    properties: { name: 'Corrected Serbia and Kosovo boundaries' },
+    geometry: correctedBalkanBoundaries,
+  }],
 };
 
 const destination = path.resolve(__dirname, '../src/data/map/geoviaWorldBorders.json');
