@@ -482,6 +482,7 @@ function ProfilePage() {
           </div>
         </div>
       </section>
+      <div className="profile-bottom-grid">
       <section className="profile-section">
         <div className="profile-section-heading">
           <div>
@@ -560,6 +561,7 @@ function ProfilePage() {
           </div>
         </div>
       </section>
+      </div>
     </main>
   );
 }
