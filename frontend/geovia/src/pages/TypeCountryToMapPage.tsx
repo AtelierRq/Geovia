@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type FormEvent } from 'react'
+import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
 import { ArrowLeft, CheckCircle2, Clock3, Flag, Minus, Plus, Trophy, XCircle } from 'lucide-react'
 import { Link, useParams } from 'react-router-dom'
 import { ComposableMap, Geographies, Geography, ZoomableGroup } from 'react-simple-maps'
@@ -32,6 +32,10 @@ const MAP_ID_ALIASES: Record<string, string> = {
   '732': 'morocco', // Sahara Zachodnia -> Maroko
 }
 
+function normalizeLongitude(longitude: number): number {
+  return ((longitude + 180) % 360 + 360) % 360 - 180
+}
+
 function formatTime(seconds: number) {
   const minutes = Math.floor(seconds / 60).toString().padStart(2, '0')
   const remainingSeconds = (seconds % 60).toString().padStart(2, '0')
@@ -43,10 +47,13 @@ function TypeCountryToMapPage() {
   const categoryId = routeCategoryId ?? 'countries'
   const areaId = routeAreaId ?? 'europe'
   const modeId = routeModeId ?? 'type-to-map'
-  const quizCountries = areaId === 'world' ? countries : getCountriesByContinent(areaId as any)
+  const quizCountries = useMemo(() => areaId === 'world' ? countries : getCountriesByContinent(areaId as any), [areaId])
   const isWorldMap = areaId === 'world'
   const mapCenter: [number, number] = isWorldMap ? [0, 15] : [20, 54]
   const projectionScale = isWorldMap ? 155 : 520
+  // W projekcji Mercatora pełny świat ma szerokość 2π × skala.
+  const worldWidth = 2 * Math.PI * projectionScale
+  const worldCopyOffsets = isWorldMap ? [-1, 0, 1] : [0]
   const category = categories.find((item) => item.id === categoryId)
   const area = areas.find((item) => item.id === areaId)
   const [answer, setAnswer] = useState('')
@@ -56,18 +63,34 @@ function TypeCountryToMapPage() {
   const [now, setNow] = useState(Date.now())
   const [endedResult, setEndedResult] = useState<SavedQuizResult | null>(null)
   const [mapZoom, setMapZoom] = useState(1)
+  const mapZoomRef = useRef(1)
+  const pendingZoomRef = useRef(1)
+  const wheelFrameRef = useRef<number | null>(null)
   const [mapCenterState, setMapCenterState] = useState<[number, number]>(isWorldMap ? [0, 15] : [20, 54])
+  const quizCountryByMapId = useMemo(() => new Map(quizCountries.map((country) => [country.mapId.replace(/^0+/, ''), country])), [quizCountries])
+  const quizCountryById = useMemo(() => new Map(quizCountries.map((country) => [country.id, country])), [quizCountries])
 
   const foundSet = useMemo(() => new Set(foundIds), [foundIds])
   const elapsedSeconds = startedAt === null ? 0 : Math.floor((now - startedAt) / 1000)
   const isCompleted = foundIds.length === quizCountries.length
   const isEnded = endedResult !== null
 
+  function updateMapZoom(nextZoom: number) {
+    const clamped = Math.min(20, Math.max(1, nextZoom))
+    mapZoomRef.current = clamped
+    pendingZoomRef.current = clamped
+    setMapZoom(clamped)
+  }
+
   useEffect(() => {
     if (startedAt === null || isEnded) return
     const timer = window.setInterval(() => setNow(Date.now()), 1000)
     return () => window.clearInterval(timer)
   }, [startedAt, isEnded])
+
+  useEffect(() => () => {
+    if (wheelFrameRef.current !== null) window.cancelAnimationFrame(wheelFrameRef.current)
+  }, [])
 
   function saveResult(status: SavedQuizResult['status']) {
     if (endedResult) return
@@ -175,14 +198,22 @@ function TypeCountryToMapPage() {
                 className="map-wrap"
                 onWheel={(event) => {
                   event.preventDefault()
-                  setMapZoom((current) => Math.min(20, Math.max(1, current * (event.deltaY < 0 ? 1.2 : 1 / 1.2))))
+                  pendingZoomRef.current = Math.min(20, Math.max(1,
+                    pendingZoomRef.current * (event.deltaY < 0 ? 1.2 : 1 / 1.2),
+                  ))
+                  if (wheelFrameRef.current !== null) return
+                  wheelFrameRef.current = window.requestAnimationFrame(() => {
+                    mapZoomRef.current = pendingZoomRef.current
+                    setMapZoom(pendingZoomRef.current)
+                    wheelFrameRef.current = null
+                  })
                 }}
               >
                 <div className="map-zoom-controls" aria-label="Sterowanie powiększeniem mapy">
-                  <button type="button" aria-label="Powiększ mapę" onClick={() => setMapZoom((current) => Math.min(20, current * 1.25))}>
+                  <button type="button" aria-label="Powiększ mapę" onClick={() => updateMapZoom(mapZoomRef.current * 1.25)}>
                     <Plus size={16} />
                   </button>
-                  <button type="button" aria-label="Pomniejsz mapę" onClick={() => setMapZoom((current) => Math.max(1, current / 1.25))}>
+                  <button type="button" aria-label="Pomniejsz mapę" onClick={() => updateMapZoom(mapZoomRef.current / 1.25)}>
                     <Minus size={16} />
                   </button>
                 </div>
@@ -193,22 +224,32 @@ function TypeCountryToMapPage() {
                     minZoom={1}
                     maxZoom={20}
                     onMoveEnd={({ coordinates, zoom }) => {
-                      setMapCenterState(coordinates as [number, number])
+                      const nextCenter = coordinates as [number, number]
+                      // Na mapie świata zawijamy środek do zakresu [-180°, 180°].
+                      // Dzięki temu kamera może przechodzić przez antymeridian bez
+                      // wyczerpania trzech renderowanych kopii świata.
+                      setMapCenterState(
+                        isWorldMap
+                          ? [normalizeLongitude(nextCenter[0]), nextCenter[1]]
+                          : nextCenter,
+                      )
                       if (typeof zoom === 'number') {
+                        mapZoomRef.current = zoom
+                        pendingZoomRef.current = zoom
                         setMapZoom(zoom)
                       }
                     }}
                   >
                     <Geographies geography={geoviaWorldCountries as any}>
-                      {({ geographies }) => (
-                        <>
+                      {({ geographies }) => worldCopyOffsets.map((copyOffset) => (
+                        <g key={`world-copy-${copyOffset}`} transform={`translate(${copyOffset * worldWidth}, 0)`}>
                           {geographies.map((geo) => {
                             const mapId = String(geo.id).replace(/^0+/, '')
-                            const country = quizCountries.find((item) => item.mapId.replace(/^0+/, '') === mapId || item.id === MAP_ID_ALIASES[mapId])
+                            const country = quizCountryByMapId.get(mapId) ?? quizCountryById.get(MAP_ID_ALIASES[mapId])
                             const isFound = country ? foundSet.has(country.id) : false
                             return (
                               <Geography
-                                key={geo.rsmKey}
+                                key={`${copyOffset}-${geo.rsmKey}`}
                                 geography={geo}
                                 fill={isFound ? '#68a889' : '#e7e9e2'}
                                 stroke="none"
@@ -218,19 +259,23 @@ function TypeCountryToMapPage() {
                               />
                             )
                           })}
-                        </>
-                      )}
+                        </g>
+                      ))}
                     </Geographies>
                     <Geographies geography={geoviaWorldBorders as any}>
-                      {({ geographies }) => geographies.map((geo) => (
-                        <Geography
-                          key={geo.rsmKey}
-                          geography={geo}
-                          fill="none"
-                          stroke="#9daaa1"
-                          strokeWidth={Math.max(0.12, 0.65 / Math.pow(mapZoom, 0.62))}
-                          style={{ outline: 'none', pointerEvents: 'none' }}
-                        />
+                      {({ geographies }) => worldCopyOffsets.map((copyOffset) => (
+                        <g key={`world-borders-${copyOffset}`} transform={`translate(${copyOffset * worldWidth}, 0)`}>
+                          {geographies.map((geo) => (
+                            <Geography
+                              key={`${copyOffset}-${geo.rsmKey}`}
+                              geography={geo}
+                              fill="none"
+                              stroke="#9daaa1"
+                              strokeWidth={Math.max(0.12, 0.65 / Math.pow(mapZoom, 0.62))}
+                              style={{ outline: 'none', pointerEvents: 'none' }}
+                            />
+                          ))}
+                        </g>
                       ))}
                     </Geographies>
                   </ZoomableGroup>

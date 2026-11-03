@@ -27,6 +27,10 @@ import "../styles/profile.css";
 
 type KnowledgeElementKey = "name" | "capital" | "flag";
 
+function normalizeLongitude(longitude: number): number {
+  return ((longitude + 180) % 360 + 360) % 360 - 180;
+}
+
 // Dodatkowe geometrie przypisane do państwa nadrzędnego na mapie świata.
 const MAP_ID_ALIASES: Record<string, string> = {
   "304": "denmark", // Grenlandia -> Dania
@@ -108,7 +112,6 @@ function ProfilePage() {
       ),
     [],
   );
-  if (!user) return <Navigate to="/login" replace />;
 
   const thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
   const recentResults = results.filter(
@@ -132,30 +135,82 @@ function ProfilePage() {
     (counts, item) => { counts[item.overall] += 1; return counts; },
     { unknown: 0, "needs-work": 0, learning: 0, mastered: 0 } as Record<CountryMapStatus, number>,
   );
-  const countryById = new Map(countries.map((country) => [country.id, country]));
+  const countryById = useMemo(() => new Map(countries.map((country) => [country.id, country])), []);
+  const countryByMapId = useMemo(() => new Map(countries.map((country) => [country.mapId.replace(/^0+/, ""), country])), []);
+  const knowledgeByCountryId = useMemo(() => new Map(countryKnowledge.map((item) => [item.countryId, item])), [countryKnowledge]);
   const [selectedCountryId, setSelectedCountryId] = useState<string | null>(null);
   const [mapZoom, setMapZoom] = useState(1);
   const [mapCenter, setMapCenter] = useState<[number, number]>([10, 15]);
+  const mapZoomRef = useRef(1);
+  const pendingZoomRef = useRef(1);
+  const wheelFrameRef = useRef<number | null>(null);
+  const hoveredCountryIdRef = useRef<string | null>(null);
+  const worldWidth = 2 * Math.PI * 145;
+  const worldCopyOffsets = [-1, 0, 1];
   const mapFrameRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const mapFrame = mapFrameRef.current;
     if (!mapFrame) return;
 
-    // A native, non-passive listener is required so preventDefault() still
-    // blocks page scrolling when the map reaches either zoom limit.
+    // Coalesce wheel events into at most one React update per animation frame.
     const handleWheel = (event: WheelEvent) => {
       event.preventDefault();
-      setMapZoom((current) =>
-        Math.min(20, Math.max(1, current * (event.deltaY < 0 ? 1.2 : 1 / 1.2))),
-      );
+      pendingZoomRef.current = Math.min(20, Math.max(1,
+        pendingZoomRef.current * (event.deltaY < 0 ? 1.2 : 1 / 1.2),
+      ));
+      if (wheelFrameRef.current !== null) return;
+      wheelFrameRef.current = window.requestAnimationFrame(() => {
+        mapZoomRef.current = pendingZoomRef.current;
+        setMapZoom(pendingZoomRef.current);
+        wheelFrameRef.current = null;
+      });
+    };
+
+    // Hover is deliberately handled on the SVG paths directly. This avoids
+    // rerendering the entire map whenever the pointer crosses a country edge.
+    const getCountryId = (target: EventTarget | null) =>
+      target instanceof Element ? target.closest<SVGPathElement>("[data-country-id]")?.dataset.countryId ?? null : null;
+    const setCountryHover = (countryId: string | null) => {
+      if (hoveredCountryIdRef.current === countryId) return;
+      const previousId = hoveredCountryIdRef.current;
+      if (previousId) {
+        mapFrame.querySelectorAll<SVGPathElement>(`[data-country-id="${previousId}"]`).forEach((path) => {
+          path.setAttribute("fill", path.dataset.baseFill ?? "#d8dad5");
+        });
+      }
+      hoveredCountryIdRef.current = countryId;
+      if (countryId) {
+        mapFrame.querySelectorAll<SVGPathElement>(`[data-country-id="${countryId}"]`).forEach((path) => {
+          path.setAttribute("fill", "#8aa99b");
+        });
+      }
+    };
+    const handlePointerOver = (event: PointerEvent) => setCountryHover(getCountryId(event.target));
+    const handlePointerOut = (event: PointerEvent) => {
+      const leavingId = getCountryId(event.target);
+      const enteringId = getCountryId(event.relatedTarget);
+      if (leavingId && leavingId !== enteringId) setCountryHover(enteringId);
     };
 
     mapFrame.addEventListener("wheel", handleWheel, { passive: false });
-    return () => mapFrame.removeEventListener("wheel", handleWheel);
+    mapFrame.addEventListener("pointerover", handlePointerOver);
+    mapFrame.addEventListener("pointerout", handlePointerOut);
+    return () => {
+      mapFrame.removeEventListener("wheel", handleWheel);
+      mapFrame.removeEventListener("pointerover", handlePointerOver);
+      mapFrame.removeEventListener("pointerout", handlePointerOut);
+      if (wheelFrameRef.current !== null) window.cancelAnimationFrame(wheelFrameRef.current);
+    };
   }, []);
+  const updateMapZoom = (nextZoom: number) => {
+    const clamped = Math.min(20, Math.max(1, nextZoom));
+    mapZoomRef.current = clamped;
+    pendingZoomRef.current = clamped;
+    setMapZoom(clamped);
+  };
   const selectedKnowledge = selectedCountryId
-    ? countryKnowledge.find((item) => item.countryId === selectedCountryId)
+    ? knowledgeByCountryId.get(selectedCountryId)
     : undefined;
   const selectedCountry = selectedCountryId ? countryById.get(selectedCountryId) : undefined;
   const mapFill = (status: CountryMapStatus) => ({
@@ -165,6 +220,7 @@ function ProfilePage() {
     unknown: "#d8dad5",
   })[status];
   const statusClass = (status: KnowledgeStatus | CountryMapStatus) => `knowledge-status knowledge-status--${status}`;
+  if (!user) return <Navigate to="/login" replace />;
   return (
     <main className="profile-page">
       <section className="profile-heading">
@@ -291,10 +347,10 @@ function ProfilePage() {
                 aria-label="Interaktywna mapa znajomości państw. Wybierz państwo, aby zobaczyć szczegóły."
               >
                 <div className="knowledge-map-zoom-controls" aria-label="Sterowanie powiększeniem mapy">
-                  <button type="button" aria-label="Powiększ mapę" onClick={() => setMapZoom((current) => Math.min(20, current * 1.25))}>
+                  <button type="button" aria-label="Powiększ mapę" onClick={() => updateMapZoom(mapZoomRef.current * 1.25)}>
                     <Plus size={17} />
                   </button>
-                  <button type="button" aria-label="Pomniejsz mapę" onClick={() => setMapZoom((current) => Math.max(1, current / 1.25))}>
+                  <button type="button" aria-label="Pomniejsz mapę" onClick={() => updateMapZoom(mapZoomRef.current / 1.25)}>
                     <Minus size={17} />
                   </button>
                 </div>
@@ -312,43 +368,59 @@ function ProfilePage() {
                     maxZoom={20}
                     onMoveEnd={({ coordinates, zoom }) => {
                       if (Array.isArray(coordinates)) {
-                        setMapCenter(coordinates as [number, number]);
+                        const nextCenter = coordinates as [number, number];
+                        setMapCenter([normalizeLongitude(nextCenter[0]), nextCenter[1]]);
                       }
-                      if (typeof zoom === "number") setMapZoom(zoom);
+                      if (typeof zoom === "number") {
+                        mapZoomRef.current = zoom;
+                        pendingZoomRef.current = zoom;
+                        setMapZoom(zoom);
+                      }
                     }}
                   >
                     <Geographies geography={geoviaWorldCountries as any}>
-                      {({ geographies }) => geographies.map((geo) => {
-                        const mapId = String(geo.id).replace(/^0+/, "");
-                        const country = countries.find((item) => item.mapId.replace(/^0+/, "") === mapId || item.id === MAP_ID_ALIASES[mapId]);
-                        if (!country) return (
-                          <Geography key={geo.rsmKey} geography={geo} fill="#e8e8e2" stroke="none" strokeWidth={0} style={{ outline: "none" }} />
-                        );
-                        const knowledge = countryKnowledge.find((item) => item.countryId === country.id);
-                        return (
-                          <Geography
-                            key={geo.rsmKey}
-                            geography={geo}
-                            onClick={() => setSelectedCountryId(country.id)}
-                            fill={mapFill(knowledge?.overall ?? "unknown")}
-                            stroke="none"
-                            strokeWidth={0}
-                            style={{ outline: "none", cursor: "pointer", transition: "fill 120ms ease" }}
-                            aria-label={country.name}
-                          />
-                        );
-                      })}
+                      {({ geographies }) => worldCopyOffsets.map((copyOffset) => (
+                        <g key={`world-copy-${copyOffset}`} transform={`translate(${copyOffset * worldWidth}, 0)`}>
+                          {geographies.map((geo) => {
+                            const mapId = String(geo.id).replace(/^0+/, "");
+                            const country = countryByMapId.get(mapId) ?? countryById.get(MAP_ID_ALIASES[mapId]);
+                            if (!country) return (
+                              <Geography key={`${copyOffset}-${geo.rsmKey}`} geography={geo} fill="#e8e8e2" stroke="none" strokeWidth={0} style={{ outline: "none" }} />
+                            );
+                            const knowledge = knowledgeByCountryId.get(country.id);
+                            const baseFill = mapFill(knowledge?.overall ?? "unknown");
+                            return (
+                              <Geography
+                                key={`${copyOffset}-${geo.rsmKey}`}
+                                geography={geo}
+                                data-country-id={country.id}
+                                data-base-fill={baseFill}
+                                onClick={() => setSelectedCountryId(country.id)}
+                                fill={baseFill}
+                                stroke="none"
+                                strokeWidth={0}
+                                style={{ outline: "none", cursor: "pointer" }}
+                                aria-label={country.name}
+                              />
+                            );
+                          })}
+                        </g>
+                      ))}
                     </Geographies>
                     <Geographies geography={geoviaWorldBorders as any}>
-                      {({ geographies }) => geographies.map((geo) => (
-                        <Geography
-                          key={geo.rsmKey}
-                          geography={geo}
-                          fill="none"
-                          stroke="#171a18"
-                          strokeWidth={Math.max(0.12, 0.65 / Math.pow(mapZoom, 0.62))}
-                          style={{ outline: "none", pointerEvents: "none" }}
-                        />
+                      {({ geographies }) => worldCopyOffsets.map((copyOffset) => (
+                        <g key={`world-borders-${copyOffset}`} transform={`translate(${copyOffset * worldWidth}, 0)`}>
+                          {geographies.map((geo) => (
+                            <Geography
+                              key={`${copyOffset}-${geo.rsmKey}`}
+                              geography={geo}
+                              fill="none"
+                              stroke="#171a18"
+                              strokeWidth={Math.max(0.12, 0.65 / Math.pow(mapZoom, 0.62))}
+                              style={{ outline: "none", pointerEvents: "none" }}
+                            />
+                          ))}
+                        </g>
                       ))}
                     </Geographies>
                   </ZoomableGroup>
