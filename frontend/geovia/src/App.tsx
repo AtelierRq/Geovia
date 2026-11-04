@@ -11,6 +11,7 @@ import ProfilePage from './pages/ProfilePage'
 import AccountPage from './pages/AccountPage'
 import ProfileEditPage from './pages/ProfileEditPage'
 import AuthPage from './pages/AuthPage'
+import DailyChallengePage from './pages/DailyChallengePage'
 import { UserProvider } from './context/UserContext'
 import './App.css'
 
@@ -22,6 +23,7 @@ function App() {
         <Navbar />
         <Routes>
           <Route path="/" element={<HomePage />} />
+          <Route path="/daily-challenge" element={<DailyChallengePage />} />
           <Route path="/quizzes" element={<QuizCatalogPage />} />
           <Route path="/categories/:categoryId" element={<CategoryPage />} />
           <Route path="/categories/:categoryId/areas/:areaId/modes" element={<QuizModesPage />} />
