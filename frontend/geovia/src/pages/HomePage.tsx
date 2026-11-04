@@ -50,7 +50,7 @@ function HomePage() {
             <div className="daily-feature-meta"><span><BookOpen size={15}/> 5 pytań</span><span><Clock3 size={15}/> 30 sekund</span></div>
             <Link to="/daily-challenge" className="primary-button">Podejmij wyzwanie <ArrowRight size={18}/></Link>
           </div>
-          <div className="daily-feature-art"><div className="daily-art-circle"><Globe2 size={108} strokeWidth={1}/><span>60</span></div></div>
+          <div className="daily-feature-art"><div className="daily-art-circle"><Globe2 size={108} strokeWidth={1}/><span>30</span></div></div>
         </div>
       </section>
 
@@ -66,6 +66,7 @@ function HomePage() {
         </Link>
       </section>
 
+      <div className="home-discovery-grid">
       <section className="home-section content-sections">
         <div className="section-heading home-section-heading">
           <span className="eyebrow"><Sparkles size={14}/> ODKRYWAJ NOWOŚCI</span>
@@ -91,6 +92,8 @@ function HomePage() {
           <Link to="/quizzes">Przeglądaj katalog <ArrowRight size={16}/></Link>
         </div>
       </section>
+
+      </div>
 
       <section className="home-section facts-section">
         <div className="section-heading home-section-heading">
