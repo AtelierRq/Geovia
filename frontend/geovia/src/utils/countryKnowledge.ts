@@ -72,14 +72,14 @@ function statusFromOutcomes(outcomes: boolean[]): KnowledgeStatus {
  * Calculates knowledge from saved quiz runs only.
  * A saved run contributes one outcome per country in its scope:
  * foundCountries are correct; all other in-scope countries are incorrect.
- * Unimplemented quiz categories (such as flags) remain unknown.
+ * Name, capital and flag quiz runs are evaluated independently.
  */
 export function calculateCountryKnowledge(
   results: SavedQuizResult[] = readSavedResults(),
 ): CountryKnowledge[] {
   const orderedResults = [...results].filter((result) => {
     return (
-      (result.categoryId === 'countries' || result.categoryId === 'capitals') &&
+      (result.categoryId === 'countries' || result.categoryId === 'capitals' || result.categoryId === 'flags') &&
       typeof result.endedAt === 'string' &&
       !Number.isNaN(new Date(result.endedAt).getTime())
     )
@@ -87,14 +87,18 @@ export function calculateCountryKnowledge(
     return new Date(a.endedAt!).getTime() - new Date(b.endedAt!).getTime()
   })
 
-  const outcomes = new Map<string, { name: boolean[]; capital: boolean[] }>()
+  const outcomes = new Map<string, { name: boolean[]; capital: boolean[]; flag: boolean[] }>()
 
   for (const country of countries) {
-    outcomes.set(country.id, { name: [], capital: [] })
+    outcomes.set(country.id, { name: [], capital: [], flag: [] })
   }
 
   for (const result of orderedResults) {
-    const element = result.categoryId === 'countries' ? 'name' : 'capital'
+    const element = result.categoryId === 'countries'
+      ? 'name'
+      : result.categoryId === 'capitals'
+        ? 'capital'
+        : 'flag'
     const scope = countriesInArea(result.areaId)
     const found = new Set(
       (result.foundCountries ?? []).filter((id): id is string => typeof id === 'string'),
@@ -107,12 +111,12 @@ export function calculateCountryKnowledge(
   }
 
   return countries.map((country) => {
-    const countryOutcomes = outcomes.get(country.id) ?? { name: [], capital: [] }
+    const countryOutcomes = outcomes.get(country.id) ?? { name: [], capital: [], flag: [] }
     const name = statusFromOutcomes(countryOutcomes.name)
     const capital = capitals.some((item) => item.countryId === country.id)
       ? statusFromOutcomes(countryOutcomes.capital)
       : 'unknown'
-    const flag: KnowledgeStatus = 'unknown'
+    const flag = statusFromOutcomes(countryOutcomes.flag)
     const elements = [name, capital, flag]
 
     let overall: CountryMapStatus
@@ -135,7 +139,7 @@ export function calculateCountryKnowledge(
       evidence: {
         name: countryOutcomes.name.length,
         capital: countryOutcomes.capital.length,
-        flag: 0,
+        flag: countryOutcomes.flag.length,
       },
     }
   })

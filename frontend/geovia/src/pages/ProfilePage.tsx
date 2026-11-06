@@ -478,7 +478,7 @@ function ProfilePage() {
                 )}
               </div>
             </div>
-            <small>Kliknij państwo na mapie, aby zobaczyć szczegółowe statusy. Flagi pozostają szare, dopóki nie będzie quizu z flagami.</small>
+            <small>Kliknij państwo na mapie, aby zobaczyć szczegółowe statusy.</small>
           </div>
         </div>
       </section>
