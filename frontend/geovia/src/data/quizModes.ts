@@ -55,10 +55,5 @@ export const quizModesByCategoryAndArea: Record<string, Record<string, QuizMode[
       { id: 'flag-on-map', title: 'Znajdź państwo na mapie', description: 'Zobacz flagę i wskaż państwo, do którego należy.', icon: 'map' },
       { id: 'choose-flag', title: 'Wybierz właściwą flagę', description: 'Dopasuj flagę do podanej nazwy państwa.', icon: 'list-check' },
     ],
-    europe: [
-      { id: 'name-flag', title: 'Rozpoznaj flagę', description: 'Zobacz flagę i wpisz nazwę państwa.', icon: 'flag' },
-      { id: 'flag-on-map', title: 'Znajdź państwo na mapie', description: 'Zobacz flagę i wskaż państwo, do którego należy.', icon: 'map' },
-      { id: 'choose-flag', title: 'Wybierz właściwą flagę', description: 'Dopasuj flagę do podanej nazwy państwa.', icon: 'list-check' },
-    ],
   },
 }
