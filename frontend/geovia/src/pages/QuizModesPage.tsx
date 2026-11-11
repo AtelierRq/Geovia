@@ -34,7 +34,7 @@ function QuizModesPage() {
       </Link>
 
       <section className="catalog-heading modes-heading">
-        <div className={`area-title-icon ${category.imageClass}`}>
+        <div className="area-title-icon">
           <CategoryIcon size={30} />
         </div>
         <span className="eyebrow">WYBRANA KATEGORIA I OBSZAR</span>

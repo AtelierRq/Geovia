@@ -28,7 +28,7 @@ function CategoryPage() {
       </Link>
 
       <section className="catalog-heading">
-        <div className={`area-title-icon ${category.imageClass}`}>
+        <div className="area-title-icon">
           <Icon size={32} />
         </div>
         <span className="eyebrow">WYBRANA KATEGORIA</span>
@@ -43,27 +43,27 @@ function CategoryPage() {
         </div>
 
         <div className="area-grid">
-          {areas.map((area) => {
-            const AreaIcon = area.icon
-
-            return (
-              <button
-                type="button"
-                className="category-card area-selection-card"
-                key={area.id}
-                onClick={() => navigate(`/categories/${category.id}/areas/${area.id}/modes`)}
-              >
-                <div className={`category-image ${area.imageClass}`}>
-                  <AreaIcon size={42} />
-                </div>
-                <div className="category-card-content">
-                  <h3>{area.name}</h3>
-                  <p>{area.description}</p>
-                </div>
-                <ArrowRight size={18} className="card-arrow" />
-              </button>
-            )
-          })}
+          {areas.map((area) => (
+            <button
+              type="button"
+              className="category-card area-selection-card"
+              key={area.id}
+              onClick={() => navigate(`/categories/${category.id}/areas/${area.id}/modes`)}
+            >
+              <div className="category-image area-card-image">
+                <img
+                  src={area.image}
+                  alt={`Widok obszaru: ${area.name}`}
+                  className="area-image-photo"
+                />
+              </div>
+              <div className="category-card-content">
+                <h3>{area.name}</h3>
+                <p>{area.description}</p>
+              </div>
+              <ArrowRight size={18} className="card-arrow" />
+            </button>
+          ))}
         </div>
       </section>
     </main>

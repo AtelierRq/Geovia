@@ -7,21 +7,25 @@ type CardCategory = {
   title: string
   description: string
   icon: ComponentType<{ size?: number }>
-  imageClass: string
+  image: string
 }
 
 function CategoryCard({ category }: { category: CardCategory }) {
-  const Icon = category.icon
-
   return (
     <Link to={`/categories/${category.id}`} className="category-card">
-      <div className={`category-image ${category.imageClass}`}>
-        <Icon size={42} />
+      <div className="category-image">
+        <img
+          src={category.image}
+          alt=""
+          className="category-image-photo"
+        />
       </div>
+
       <div className="category-card-content">
         <h3>{category.title}</h3>
         <p>{category.description}</p>
       </div>
+
       <ArrowRight size={18} className="card-arrow" />
     </Link>
   )

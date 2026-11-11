@@ -9,6 +9,15 @@ import {
   Compass,
   ShieldQuestion,
 } from 'lucide-react'
+import countriesImage from '../assets/category-illustrations/countries.jpg'
+import capitalsImage from '../assets/category-illustrations/capitals.jpg'
+import flagsImage from '../assets/category-illustrations/flags.jpg'
+import citiesImage from '../assets/category-illustrations/cities.jpg'
+import seasImage from '../assets/category-illustrations/seas.jpg'
+import riversImage from '../assets/category-illustrations/rivers.jpg'
+import islandsImage from '../assets/category-illustrations/islands.jpg'
+import dependentTerritoriesImage from '../assets/category-illustrations/dependent-territories.jpg'
+import unrecognizedStatesImage from '../assets/category-illustrations/unrecognized-states.jpg'
 
 export const categories = [
   {
@@ -16,62 +25,62 @@ export const categories = [
     title: 'Państwa',
     description: 'Poznaj państwa świata i ich położenie.',
     icon: Globe2,
-    imageClass: 'countries-image',
+    image: countriesImage,
   },
   {
     id: 'capitals',
     title: 'Stolice',
     description: 'Sprawdź znajomość stolic państw.',
     icon: Landmark,
-    imageClass: 'capitals-image',
+    image: capitalsImage,
   },
   {
     id: 'flags',
     title: 'Flagi',
     description: 'Rozpoznawaj flagi państw świata.',
     icon: Flag,
-    imageClass: 'flags-image',
+    image: flagsImage,
   },
   {
     id: 'cities',
     title: 'Miasta',
     description: 'Poznaj największe miasta świata.',
     icon: Building2,
-    imageClass: 'cities-image',
+    image: citiesImage,
   },
   {
     id: 'seas',
     title: 'Morza',
     description: 'Sprawdź swoją wiedzę o morzach świata.',
     icon: Waves,
-    imageClass: 'seas-image',
+    image: seasImage,
   },
   {
     id: 'rivers',
     title: 'Rzeki',
     description: 'Poznaj największe rzeki świata.',
     icon: Droplets,
-    imageClass: 'rivers-image',
+    image: riversImage,
   },
   {
     id: 'islands',
     title: 'Wyspy',
     description: 'Poznaj największe wyspy świata.',
     icon: Mountain,
-    imageClass: 'islands-image',
+    image: islandsImage,
   },
   {
     id: 'dependent-territories',
     title: 'Terytoria zależne',
     description: 'Poznaj terytoria zależne na świecie.',
     icon: Compass,
-    imageClass: 'dependent-territories-image',
+    image: dependentTerritoriesImage,
   },
   {
     id: 'unrecognized-states',
     title: 'Państwa nieuznawane',
     description: 'Poznaj państwa i terytoria o spornym statusie międzynarodowym.',
     icon: ShieldQuestion,
-    imageClass: 'unrecognized-states-image',
+    image: unrecognizedStatesImage,
   },
 ]
