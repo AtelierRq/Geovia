@@ -1,5 +1,5 @@
 import { ArrowLeft, ArrowRight } from 'lucide-react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
 import { categories } from '../data/categories'
 import { areas } from '../data/areas'
 
@@ -17,6 +17,10 @@ function CategoryPage() {
         </section>
       </main>
     )
+  }
+
+  if (category.id === 'unrecognized-states') {
+    return <Navigate to={`/categories/${category.id}/areas/world/modes`} replace />
   }
 
   const Icon = category.icon

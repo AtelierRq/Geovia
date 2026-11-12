@@ -29,8 +29,12 @@ function QuizModesPage() {
 
   return (
     <main className="modes-page">
-      <Link to={`/categories/${category.id}`} className="back-link">
-        <ArrowLeft size={17} /> Wybór obszaru
+      <Link
+        to={category.id === 'unrecognized-states' ? '/quizzes' : `/categories/${category.id}`}
+        className="back-link"
+      >
+        <ArrowLeft size={17} />
+        {category.id === 'unrecognized-states' ? 'Wszystkie kategorie' : 'Wybór obszaru'}
       </Link>
 
       <section className="catalog-heading modes-heading">
