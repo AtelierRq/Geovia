@@ -1,6 +1,6 @@
 package pl.geovia.entity;
 
-import com.geovia.backend.entity.enums.GuestImportStatus;
+import pl.geovia.entity.enums.GuestImportStatus;
 import jakarta.persistence.*;
 
 import java.time.OffsetDateTime;
@@ -26,7 +26,7 @@ public class Profile {
     @Column(name = "city", length = 100)
     private String city;
 
-    @Enumerated(EnumType.STRING)
+    @Convert(converter = GuestImportStatusConverter.class)
     @Column(name = "guest_import_status", nullable = false, length = 20)
     private GuestImportStatus guestImportStatus = GuestImportStatus.PENDING;
 
