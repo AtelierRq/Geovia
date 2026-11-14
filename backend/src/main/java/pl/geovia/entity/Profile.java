@@ -42,6 +42,20 @@ public class Profile {
     protected Profile() {
     }
 
+    public Profile(
+            UUID id,
+            String username,
+            String avatarUrl,
+            String bio,
+            String city
+    ) {
+        this.id = id;
+        this.username = username;
+        this.avatarUrl = avatarUrl;
+        this.bio = bio;
+        this.city = city;
+    }
+
     @PrePersist
     protected void onCreate() {
         OffsetDateTime now = OffsetDateTime.now();
