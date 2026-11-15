@@ -1,16 +1,19 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowLeft, CheckCircle2, Clock3, RotateCcw, Trophy, XCircle } from 'lucide-react'
-import { capitals } from '../data/capitals'
-import { countries } from '../data/countries'
 import { useUser } from '../context/UserContext'
+import {
+  checkDailyChallengeAnswer,
+  ensureBackendProfile,
+  finishDailyChallengeAttempt,
+  getBestDailyChallengeResult,
+  getDailyChallengeHistory,
+  getTodayChallenge,
+  startDailyChallengeAttempt,
+  type DailyChallenge,
+  type GameAttempt,
+} from '../api/dailyChallenge'
 import '../styles/daily-challenge.css'
-
-type Question = {
-  country: string
-  answer: string
-  options: string[]
-}
 
 type Attempt = {
   date: string
@@ -19,216 +22,276 @@ type Attempt = {
   completedAt: string
 }
 
-const ATTEMPTS_KEY = 'geovia.dailyChallenge.attempts'
-const QUESTION_COUNT = 5
-const TIME_LIMIT = 30
-const TIME_LIMIT_MS = TIME_LIMIT * 1000
+type GameStatus = 'loading' | 'intro' | 'playing' | 'finished'
 
-function todayKey() {
-  const now = new Date()
-  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
-}
+const FEEDBACK_DELAY_MS = 550
 
-function seededRandom(seed: number) {
-  let value = seed >>> 0
-  return () => {
-    value = (value * 1664525 + 1013904223) >>> 0
-    return value / 4294967296
-  }
-}
-
-function seededShuffle<T>(items: T[], random: () => number): T[] {
-  const shuffled = [...items]
-  for (let index = shuffled.length - 1; index > 0; index -= 1) {
-    const swapIndex = Math.floor(random() * (index + 1))
-    ;[shuffled[index], shuffled[swapIndex]] = [shuffled[swapIndex], shuffled[index]]
-  }
-  return shuffled
-}
-
-function dailyQuestions(date: string): Question[] {
-  const seed = Number(date.replaceAll('-', ''))
-  const random = seededRandom(seed)
-  const pool = capitals
-    .map((capital) => ({
-      country: countries.find((country) => country.id === capital.countryId)?.name,
-      answer: capital.name,
-    }))
-    .filter((item): item is { country: string; answer: string } => Boolean(item.country))
-  const shuffled = seededShuffle(pool, random)
-  return shuffled.slice(0, QUESTION_COUNT).map((item) => {
-    const distractors = seededShuffle([...new Set(pool
-      .filter((candidate) => candidate.answer !== item.answer)
-      .map((candidate) => candidate.answer))], random).slice(0, 3)
-    return {
-      country: item.country,
-      answer: item.answer,
-      options: seededShuffle([...distractors, item.answer], random),
-    }
-  })
-}
-
-function readAttempts(key: string): Attempt[] {
-  try {
-    const parsed = JSON.parse(localStorage.getItem(key) ?? '[]')
-    return Array.isArray(parsed) ? parsed : []
-  } catch {
-    return []
+function mapAttempt(attempt: GameAttempt): Attempt {
+  return {
+    date: attempt.finishedAt.slice(0, 10),
+    score: attempt.correctCount,
+    elapsedSeconds: Math.min(30, Math.ceil(attempt.durationMs / 1000)),
+    completedAt: attempt.finishedAt,
   }
 }
 
 function DailyChallengePage() {
   const { user } = useUser()
-  const date = todayKey()
-  const storageKey = `${ATTEMPTS_KEY}.${user?.email ?? 'guest'}`
-  const questions = useMemo(() => dailyQuestions(date), [date])
-  const [attempts, setAttempts] = useState<Attempt[]>(() => readAttempts(storageKey))
-  const [status, setStatus] = useState<'intro' | 'playing' | 'finished'>('intro')
+  const [challenge, setChallenge] = useState<DailyChallenge | null>(null)
+  const [profileId, setProfileId] = useState<string | null>(null)
+  const [attempts, setAttempts] = useState<Attempt[]>([])
+  const [status, setStatus] = useState<GameStatus>('loading')
   const [questionIndex, setQuestionIndex] = useState(0)
   const [score, setScore] = useState(0)
   const [selected, setSelected] = useState<string | null>(null)
+  const [correctAnswer, setCorrectAnswer] = useState<string | null>(null)
   const [startedAt, setStartedAt] = useState<number | null>(null)
   const [pausedMs, setPausedMs] = useState(0)
   const [elapsedMs, setElapsedMs] = useState(0)
   const [completedElapsedMs, setCompletedElapsedMs] = useState(0)
+  const [loadingError, setLoadingError] = useState<string | null>(null)
+  const [actionError, setActionError] = useState<string | null>(null)
+  const [bestToday, setBestToday] = useState<Attempt | null>(null)
+  const answersRef = useRef<string[]>([])
+  const sessionIdRef = useRef<string | null>(null)
+  const finishInProgressRef = useRef(false)
+
+  const date = challenge?.challengeDate ?? ''
+  const questionCount = challenge?.questionCount ?? 5
+  const timeLimit = challenge?.timeLimitSeconds ?? 30
+  const timeLimitMs = timeLimit * 1000
+  const questions = challenge?.questions ?? []
+  const currentQuestion = questions[questionIndex]
+
+  const loadChallenge = useCallback(async () => {
+    setStatus('loading')
+    setLoadingError(null)
+    try {
+      const currentUser = user ?? {
+        username: 'Gość',
+        email: 'guest@geovia.local',
+        avatar: null,
+        bio: '',
+        city: '',
+      }
+      const [challengeData, profile] = await Promise.all([
+        getTodayChallenge(),
+        ensureBackendProfile(currentUser),
+      ])
+      setChallenge(challengeData)
+      setProfileId(profile.id)
+
+      const history = await getDailyChallengeHistory(profile.id)
+      const mappedAttempts = history.attempts.map(mapAttempt)
+      setAttempts(mappedAttempts)
+
+      try {
+        const best = await getBestDailyChallengeResult(challengeData.id, profile.id)
+        setBestToday(mapAttempt(best))
+      } catch (error) {
+        if (error instanceof Error && !error.message.includes('404')) throw error
+        setBestToday(null)
+      }
+      setStatus('intro')
+    } catch (error) {
+      setLoadingError(error instanceof Error ? error.message : 'Nie udało się pobrać wyzwania dnia.')
+      setStatus('loading')
+    }
+  }, [user])
 
   useEffect(() => {
-    setAttempts(readAttempts(storageKey))
-  }, [storageKey])
+    void loadChallenge()
+  }, [loadChallenge])
+
+  const todayAttempts = useMemo(
+    () => attempts.filter((attempt) => attempt.date === date),
+    [attempts, date],
+  )
+
+  const bestAttempt = useMemo(() => {
+    if (bestToday) return bestToday
+    return todayAttempts.reduce<Attempt | null>((best, attempt) => {
+      if (!best || attempt.score > best.score || (attempt.score === best.score && attempt.elapsedSeconds < best.elapsedSeconds)) return attempt
+      return best
+    }, null)
+  }, [bestToday, todayAttempts])
+
+  const refreshHistory = useCallback(async () => {
+    if (!profileId || !challenge) return
+    const history = await getDailyChallengeHistory(profileId)
+    setAttempts(history.attempts.map(mapAttempt))
+    try {
+      const best = await getBestDailyChallengeResult(challenge.id, profileId)
+      setBestToday(mapAttempt(best))
+    } catch {
+      setBestToday(null)
+    }
+  }, [challenge, profileId])
+
+  const finishChallenge = useCallback(async (activeElapsedMs: number, totalPausedMs: number) => {
+    if (!sessionIdRef.current || finishInProgressRef.current) return
+    finishInProgressRef.current = true
+    setCompletedElapsedMs(Math.min(timeLimitMs, Math.max(0, activeElapsedMs)))
+    setElapsedMs(Math.min(timeLimitMs, Math.max(0, activeElapsedMs)))
+    try {
+      const result = await finishDailyChallengeAttempt(
+        sessionIdRef.current,
+        answersRef.current,
+        Math.min(7500, Math.max(0, totalPausedMs)),
+      )
+      setScore(result.correctCount)
+      setStatus('finished')
+      try {
+        await refreshHistory()
+      } catch {
+        setActionError('Wynik został zapisany, ale nie udało się odświeżyć historii.')
+      }
+    } catch (error) {
+      setActionError(error instanceof Error ? error.message : 'Nie udało się zapisać wyniku.')
+      setStatus('intro')
+      finishInProgressRef.current = false
+    }
+  }, [pausedMs, refreshHistory, timeLimitMs])
 
   useEffect(() => {
     if (status !== 'playing' || selected || startedAt === null) return
     const timer = window.setInterval(() => {
       const activeElapsed = Math.max(0, Date.now() - startedAt - pausedMs)
       setElapsedMs(activeElapsed)
-      if (activeElapsed >= TIME_LIMIT_MS) {
-        const elapsedSeconds = TIME_LIMIT
-        const attempt: Attempt = {
-          date,
-          score,
-          elapsedSeconds,
-          completedAt: new Date().toISOString(),
-        }
-        const next = [...attempts, attempt].slice(-100)
-        localStorage.setItem(storageKey, JSON.stringify(next))
-        setAttempts(next)
-        setCompletedElapsedMs(TIME_LIMIT_MS)
-        setStatus('finished')
+      if (activeElapsed >= timeLimitMs) {
+        void finishChallenge(timeLimitMs, pausedMs)
       }
     }, 50)
     return () => window.clearInterval(timer)
-  }, [status, selected, startedAt, pausedMs, score, attempts, storageKey, date])
+  }, [status, selected, startedAt, pausedMs, timeLimitMs, finishChallenge])
 
-  const currentQuestion = questions[questionIndex]
-  const todayAttempts = attempts.filter((attempt) => attempt.date === date)
-  const bestAttempt = todayAttempts.reduce<Attempt | null>((best, attempt) => {
-    if (!best || attempt.score > best.score || (attempt.score === best.score && attempt.elapsedSeconds < best.elapsedSeconds)) return attempt
-    return best
-  }, null)
-
-  function startChallenge() {
-    setQuestionIndex(0)
-    setScore(0)
-    setSelected(null)
-    setPausedMs(0)
-    setElapsedMs(0)
-    setCompletedElapsedMs(0)
-    setStartedAt(Date.now())
-    setStatus('playing')
-  }
-
-  function finishChallenge(finalScore: number, activeElapsedMs: number) {
-    const safeElapsedMs = Math.min(TIME_LIMIT_MS, Math.max(0, activeElapsedMs))
-    const elapsedSeconds = Math.min(TIME_LIMIT, Math.ceil(safeElapsedMs / 1000))
-    const attempt: Attempt = {
-      date,
-      score: finalScore,
-      elapsedSeconds,
-      completedAt: new Date().toISOString(),
+  async function startChallenge() {
+    if (!challenge || !profileId) return
+    setActionError(null)
+    setStatus('loading')
+    finishInProgressRef.current = false
+    try {
+      const session = await startDailyChallengeAttempt(challenge.id, profileId)
+      sessionIdRef.current = session.attemptSessionId
+      answersRef.current = Array.from({ length: questionCount }, () => '')
+      setQuestionIndex(0)
+      setScore(0)
+      setSelected(null)
+      setCorrectAnswer(null)
+      setPausedMs(0)
+      setElapsedMs(0)
+      setCompletedElapsedMs(0)
+      setStartedAt(Date.parse(session.startedAt))
+      setStatus('playing')
+    } catch (error) {
+      setStatus('intro')
+      setActionError(error instanceof Error ? error.message : 'Nie udało się rozpocząć próby.')
     }
-    const next = [...attempts, attempt].slice(-100)
-    localStorage.setItem(storageKey, JSON.stringify(next))
-    setAttempts(next)
-    setCompletedElapsedMs(safeElapsedMs)
-    setElapsedMs(safeElapsedMs)
-    setStatus('finished')
   }
 
-  function chooseAnswer(answer: string) {
-    if (selected || status !== 'playing' || startedAt === null) return
+  async function chooseAnswer(answer: string) {
+    if (selected || status !== 'playing' || startedAt === null || !currentQuestion || !sessionIdRef.current) return
     const answerTime = Date.now()
-    const activeElapsedAtAnswer = Math.min(TIME_LIMIT_MS, Math.max(0, answerTime - startedAt - pausedMs))
+    const activeElapsedAtAnswer = Math.min(timeLimitMs, Math.max(0, answerTime - startedAt - pausedMs))
     setSelected(answer)
-    const nextScore = score + (answer === currentQuestion.answer ? 1 : 0)
-    setScore(nextScore)
-    if (questionIndex + 1 >= QUESTION_COUNT) {
-      window.setTimeout(() => finishChallenge(nextScore, activeElapsedAtAnswer), 550)
-    } else {
+    setActionError(null)
+
+    try {
+      const checked = await checkDailyChallengeAnswer(
+        sessionIdRef.current,
+        currentQuestion.index,
+        answer,
+      )
+      answersRef.current[questionIndex] = answer
+      setCorrectAnswer(checked.correctAnswer)
+      const nextScore = score + (checked.correct ? 1 : 0)
+      setScore(nextScore)
+
       window.setTimeout(() => {
-        setPausedMs((value) => value + (Date.now() - answerTime))
-        setQuestionIndex((index) => index + 1)
-        setSelected(null)
-      }, 550)
+        const feedbackPause = Date.now() - answerTime
+        if (questionIndex + 1 >= questionCount) {
+          void finishChallenge(activeElapsedAtAnswer, pausedMs + (Date.now() - answerTime))
+        } else {
+          setPausedMs((value) => value + feedbackPause)
+          setQuestionIndex((index) => index + 1)
+          setSelected(null)
+          setCorrectAnswer(null)
+        }
+      }, Math.max(0, FEEDBACK_DELAY_MS - (Date.now() - answerTime)))
+    } catch (error) {
+      setSelected(null)
+      setActionError(error instanceof Error ? error.message : 'Nie udało się sprawdzić odpowiedzi.')
     }
   }
 
-  const elapsedSeconds = Math.min(TIME_LIMIT, Math.ceil(completedElapsedMs / 1000))
+  const elapsedSeconds = Math.min(timeLimit, Math.ceil(completedElapsedMs / 1000))
   const history = [...attempts].reverse()
 
   return (
     <main className="daily-page">
       <Link to="/" className="back-link"><ArrowLeft size={17} /> Strona główna</Link>
       <section className="daily-header">
-        <span className="eyebrow">WYZWANIE DNIA · {date}</span>
-        <h1>Stolica w 30 sekund</h1>
+        <span className="eyebrow">WYZWANIE DNIA{date ? ` · ${date}` : ''}</span>
+        <h1>{challenge?.title ?? 'Stolica w 30 sekund'}</h1>
         <p>Pięć państw, pięć stolic i tylko 30 sekund na zdobycie jak największej liczby punktów.</p>
         <div className="daily-facts">
-          <span><Trophy size={16}/> 5 pytań</span>
-          <span><Clock3 size={16}/> 30 sekund</span>
+          <span><Trophy size={16}/> {questionCount} pytań</span>
+          <span><Clock3 size={16}/> {timeLimit} sekund</span>
           <span>🌍 Jeden temat</span>
         </div>
       </section>
 
       <section className="daily-game-card">
+        {status === 'loading' && (
+          <div className="daily-intro">
+            <div className="daily-emblem"><Clock3 size={34}/></div>
+            <h2>{loadingError ? 'Nie udało się załadować wyzwania' : 'Ładowanie dzisiejszego wyzwania…'}</h2>
+            {loadingError && <p>{loadingError}</p>}
+            {loadingError && <button className="primary-button" onClick={() => void loadChallenge()}>Spróbuj ponownie</button>}
+          </div>
+        )}
+
         {status === 'intro' && (
           <div className="daily-intro">
             <div className="daily-emblem"><Trophy size={34}/></div>
             <h2>Gotowy na dzisiejsze wyzwanie?</h2>
             <p>Wybierz poprawną stolicę dla każdego państwa. Możesz grać ponownie — zapisujemy każdą próbę.</p>
-            {bestAttempt && <p className="daily-best-inline">Twój najlepszy dzisiejszy wynik: <strong>{bestAttempt.score}/5</strong> · {bestAttempt.elapsedSeconds}s</p>}
-            <button className="primary-button" onClick={startChallenge}>Rozpocznij wyzwanie <Clock3 size={17}/></button>
+            {bestAttempt && <p className="daily-best-inline">Twój najlepszy dzisiejszy wynik: <strong>{bestAttempt.score}/{questionCount}</strong> · {bestAttempt.elapsedSeconds}s</p>}
+            <button className="primary-button" onClick={() => void startChallenge()}>Rozpocznij wyzwanie <Clock3 size={17}/></button>
+            {actionError && <p role="alert">{actionError}</p>}
           </div>
         )}
 
         {status === 'playing' && currentQuestion && (
           <div className="daily-playing">
             <div className="daily-progress-line">
-              <span>Pytanie {questionIndex + 1} z {QUESTION_COUNT}</span>
-              <strong className={TIME_LIMIT - Math.floor(elapsedMs / 1000) <= 10 ? 'time-warning' : ''}><Clock3 size={17}/> 00:{String(Math.max(0, TIME_LIMIT - Math.floor(elapsedMs / 1000))).padStart(2, '0')}</strong>
+              <span>Pytanie {questionIndex + 1} z {questionCount}</span>
+              <strong className={timeLimit - Math.floor(elapsedMs / 1000) <= 10 ? 'time-warning' : ''}><Clock3 size={17}/> 00:{String(Math.max(0, timeLimit - Math.floor(elapsedMs / 1000))).padStart(2, '0')}</strong>
             </div>
-            <div className="daily-progress-track"><span style={{ width: `${(questionIndex / QUESTION_COUNT) * 100}%` }}/></div>
+            <div className="daily-progress-track"><span style={{ width: `${(questionIndex / questionCount) * 100}%` }}/></div>
             <span className="eyebrow">JAKA JEST STOLICA PAŃSTWA?</span>
             <h2>{currentQuestion.country}</h2>
             <div className="daily-options">
               {currentQuestion.options.map((option) => {
-                const isCorrect = option === currentQuestion.answer
+                const isCorrect = option === correctAnswer
                 const isSelected = option === selected
                 return (
                   <button
                     key={option}
                     type="button"
                     className={`daily-option${selected && isCorrect ? ' correct' : ''}${isSelected && !isCorrect ? ' incorrect' : ''}`}
-                    onClick={() => chooseAnswer(option)}
+                    onClick={() => void chooseAnswer(option)}
                     disabled={Boolean(selected)}
                   >
                     {option}
                     {selected && isCorrect && <CheckCircle2 size={18}/>}
-                    {isSelected && !isCorrect && <XCircle size={18}/>}
+                    {isSelected && correctAnswer && !isCorrect && <XCircle size={18}/>}
                   </button>
                 )
               })}
             </div>
-            <div className="daily-live-score">Poprawne odpowiedzi: <strong>{score}/{QUESTION_COUNT}</strong></div>
+            <div className="daily-live-score">Poprawne odpowiedzi: <strong>{score}/{questionCount}</strong></div>
+            {actionError && <p role="alert">{actionError}</p>}
           </div>
         )}
 
@@ -236,14 +299,15 @@ function DailyChallengePage() {
           <div className="daily-result">
             <div className="daily-emblem"><Trophy size={34}/></div>
             <span className="eyebrow">WYZWANIE UKOŃCZONE</span>
-            <h2>{score} / {QUESTION_COUNT}</h2>
-            <p>{score === 5 ? 'Doskonale! Wszystkie odpowiedzi są poprawne.' : score >= 3 ? 'Dobra robota! Spróbuj jeszcze raz i popraw swój wynik.' : 'Nieźle — kolejna próba może być jeszcze lepsza.'}</p>
+            <h2>{score} / {questionCount}</h2>
+            <p>{score === questionCount ? 'Doskonale! Wszystkie odpowiedzi są poprawne.' : score >= 3 ? 'Dobra robota! Spróbuj jeszcze raz i popraw swój wynik.' : 'Nieźle — kolejna próba może być jeszcze lepsza.'}</p>
             <div className="daily-result-stats">
               <span><strong>{elapsedSeconds}s</strong><small>Czas</small></span>
               <span><strong>{todayAttempts.length}</strong><small>Próby dzisiaj</small></span>
-              <span><strong>{bestAttempt?.score ?? score}/5</strong><small>Najlepszy wynik</small></span>
+              <span><strong>{bestAttempt?.score ?? score}/{questionCount}</strong><small>Najlepszy wynik</small></span>
             </div>
-            <button className="primary-button" onClick={startChallenge}><RotateCcw size={17}/> Zagraj ponownie</button>
+            <button className="primary-button" onClick={() => void startChallenge()}><RotateCcw size={17}/> Zagraj ponownie</button>
+            {actionError && <p role="alert">{actionError}</p>}
           </div>
         )}
       </section>
@@ -258,7 +322,7 @@ function DailyChallengePage() {
             {history.map((attempt, index) => (
               <div className="daily-history-item" key={`${attempt.completedAt}-${index}`}>
                 <span>{attempt.date} · próba {history.length - index}</span>
-                <strong>{attempt.score}/5</strong>
+                <strong>{attempt.score}/{questionCount}</strong>
                 <span>{attempt.elapsedSeconds} s</span>
                 {attempt.date === date && attempt.score === bestAttempt?.score && attempt.elapsedSeconds === bestAttempt?.elapsedSeconds && <span className="daily-record-label">Rekord</span>}
               </div>
@@ -266,7 +330,7 @@ function DailyChallengePage() {
           </div>
         ) : <p className="daily-empty-history">Nie masz jeszcze zapisanych wyników. Rozpocznij grę, aby zapisać pierwszą próbę.</p>}
       </section>
-      <p className="daily-storage-note">Wyniki są na razie zapisywane w tej przeglądarce. Rankingi nie są jeszcze dostępne.</p>
+      <p className="daily-storage-note">Wyniki są zapisywane na Twoim profilu. Rankingi nie są jeszcze dostępne.</p>
     </main>
   )
 }

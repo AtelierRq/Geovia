@@ -31,6 +31,14 @@ public class DailyChallengeController {
         return dailyChallengeService.startAttempt(challengeId, request);
     }
 
+    @PostMapping("/attempts/{sessionId}/answers/check")
+    public CheckDailyChallengeAnswerResponse checkAnswer(
+            @PathVariable UUID sessionId,
+            @Valid @RequestBody CheckDailyChallengeAnswerRequest request
+    ) {
+        return dailyChallengeService.checkAnswer(sessionId, request);
+    }
+
     @PostMapping("/attempts/{sessionId}/finish")
     public GameAttemptResponse finishAttempt(
             @PathVariable UUID sessionId,

@@ -98,6 +98,40 @@ public class DailyChallengeService {
         );
     }
 
+    public CheckDailyChallengeAnswerResponse checkAnswer(
+            UUID sessionId,
+            CheckDailyChallengeAnswerRequest request
+    ) {
+        DailyChallengeAttemptSession session = sessionRepository.findById(sessionId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Attempt session not found"));
+        if (session.getConsumedAt() != null) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "This attempt has already been submitted");
+        }
+
+        JsonNode questions = session.getChallenge().getQuestions();
+        if (request.questionIndex() < 0 || request.questionIndex() >= questions.size()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Question index is out of range");
+        }
+
+        JsonNode question = questions.get(request.questionIndex());
+        boolean validOption = false;
+        for (JsonNode option : question.get("options")) {
+            if (option.asText().equals(request.answer())) {
+                validOption = true;
+                break;
+            }
+        }
+        if (!validOption) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Submitted answer is not a valid option");
+        }
+
+        String correctAnswer = question.get("answer").asText();
+        return new CheckDailyChallengeAnswerResponse(
+                correctAnswer.equals(request.answer()),
+                correctAnswer
+        );
+    }
+
     public GameAttemptResponse finishAttempt(UUID sessionId, FinishDailyChallengeAttemptRequest request) {
         DailyChallengeAttemptSession session = sessionRepository.findById(sessionId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Attempt session not found"));
@@ -106,8 +140,13 @@ public class DailyChallengeService {
         }
 
         DailyChallenge challenge = session.getChallenge();
-        long elapsedMs = Math.max(0, Duration.between(session.getStartedAt(), OffsetDateTime.now(CHALLENGE_ZONE)).toMillis());
+        long wallElapsedMs = Math.max(0, Duration.between(session.getStartedAt(), OffsetDateTime.now(CHALLENGE_ZONE)).toMillis());
         long limitMs = challenge.getTimeLimitSeconds() * 1000L;
+        int answeredCount = (int) request.answers().stream().filter(answer -> answer != null && !answer.isEmpty()).count();
+        // The original quiz pauses its clock while answer feedback is displayed.
+        // Cap client-reported pause time to 1.5 seconds per answered question.
+        long allowedPauseMs = Math.min(request.pausedDurationMs(), answeredCount * 1500L);
+        long elapsedMs = Math.max(0, wallElapsedMs - allowedPauseMs);
         int correct = 0;
         JsonNode questions = challenge.getQuestions();
 

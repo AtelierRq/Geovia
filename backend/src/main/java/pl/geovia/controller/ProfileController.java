@@ -30,6 +30,13 @@ public class ProfileController {
         return profileService.createProfile(request);
     }
 
+    @PostMapping("/ensure")
+    public ProfileResponse ensureProfile(
+            @Valid @RequestBody CreateProfileRequest request
+    ) {
+        return profileService.ensureProfile(request);
+    }
+
     @GetMapping("/{id}")
     public ProfileResponse getProfile(@PathVariable UUID id) {
         return profileService.getProfile(id);

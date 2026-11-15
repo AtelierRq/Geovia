@@ -47,6 +47,23 @@ public class ProfileService {
         return mapToResponse(savedProfile);
     }
 
+    public ProfileResponse ensureProfile(CreateProfileRequest request) {
+        String username = request.username().trim();
+        Profile existing = profileRepository.findByUsernameIgnoreCase(username).orElse(null);
+        if (existing != null) {
+            return mapToResponse(existing);
+        }
+
+        Profile profile = new Profile(
+                UUID.randomUUID(),
+                username,
+                request.avatarUrl(),
+                request.bio(),
+                request.city()
+        );
+        return mapToResponse(profileRepository.save(profile));
+    }
+
     @Transactional(readOnly = true)
     public ProfileResponse getProfile(UUID id) {
 
