@@ -22,6 +22,8 @@ public interface GameAttemptRepository
 
     long countByUser_Id(UUID userId);
 
+    List<GameAttempt> findAllByUser_IdAndAttemptTypeOrderByCreatedAtAsc(UUID userId, AttemptType attemptType);
+
     List<GameAttempt> findAllByUser_IdAndAttemptTypeAndChallenge_IdOrderByCreatedAtDesc(
             UUID userId, AttemptType attemptType, UUID challengeId
     );
