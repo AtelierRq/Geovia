@@ -65,7 +65,7 @@ public class GameAttempt {
     @Column(name = "created_at", nullable = false, updatable = false)
     private OffsetDateTime createdAt;
 
-    protected GameAttempt() {
+    public GameAttempt() {
     }
 
     @PrePersist

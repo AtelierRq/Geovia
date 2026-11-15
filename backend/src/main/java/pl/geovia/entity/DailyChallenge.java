@@ -65,7 +65,7 @@ public class DailyChallenge {
     @Column(name = "created_at", nullable = false, updatable = false)
     private OffsetDateTime createdAt;
 
-    protected DailyChallenge() {
+    public DailyChallenge() {
     }
 
     @PrePersist
