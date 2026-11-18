@@ -5,6 +5,8 @@ import { ComposableMap, Geographies, Geography, ZoomableGroup } from 'react-simp
 import geoviaWorldCountries from '../data/map/geoviaWorldCountries.json'
 import geoviaWorldBorders from '../data/map/geoviaWorldBorders.json'
 import { categories } from '../data/categories'
+import { useUser } from '../context/UserContext'
+import { ensureBackendProfile, createBackendQuizAttempt } from '../api/profile'
 import { areas } from '../data/areas'
 import { getCountriesByContinent, countries, normalizeCountryName } from '../data/countries'
 import '../styles/quiz-common.css'
@@ -62,6 +64,8 @@ function TypeCountryToMapPage() {
   const [startedAt, setStartedAt] = useState<number | null>(null)
   const [now, setNow] = useState(Date.now())
   const [endedResult, setEndedResult] = useState<SavedQuizResult | null>(null)
+  const backendSaveStartedRef = useRef(false)
+  const { user } = useUser()
   const [mapZoom, setMapZoom] = useState(1)
   const mapZoomRef = useRef(1)
   const pendingZoomRef = useRef(1)
@@ -114,6 +118,27 @@ function TypeCountryToMapPage() {
       // Quiz result remains visible for this session even if local storage is unavailable.
     }
     setEndedResult(result)
+    if (!backendSaveStartedRef.current && user) {
+      backendSaveStartedRef.current = true
+      const countryResults = quizCountries.map((country) => ({
+        countryId: country.id,
+        outcome: foundIds.includes(country.id) ? 'correct' as const : 'incorrect' as const,
+      }))
+      void ensureBackendProfile(user)
+        .then((profile) => createBackendQuizAttempt(profile.id, {
+          categoryId,
+          areaId,
+          modeId,
+          correctCount: result.completed,
+          totalQuestions: result.total,
+          durationMs: result.elapsedSeconds * 1000,
+          startedAt: new Date(startedAt ?? Date.now()).toISOString(),
+          finishedAt: result.endedAt,
+          status: result.status,
+          countryResults,
+        }))
+        .catch((error: unknown) => console.error('Nie udało się zapisać wyniku quizu w backendzie:', error))
+    }
   }
 
   useEffect(() => {

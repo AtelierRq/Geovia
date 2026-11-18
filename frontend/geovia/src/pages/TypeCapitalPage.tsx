@@ -1,7 +1,9 @@
-import { useEffect, useState, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { ArrowLeft, CheckCircle2, Clock3, Flag, Trophy, XCircle } from 'lucide-react'
 import { Link, useParams } from 'react-router-dom'
 import { categories } from '../data/categories'
+import { useUser } from '../context/UserContext'
+import { ensureBackendProfile, createBackendQuizAttempt } from '../api/profile'
 import { areas } from '../data/areas'
 import { capitals } from '../data/capitals'
 import { countries, normalizeCountryName } from '../data/countries'
@@ -56,6 +58,8 @@ function TypeCapitalPage() {
   const [startedAt, setStartedAt] = useState<number | null>(null)
   const [now, setNow] = useState(Date.now())
   const [endedResult, setEndedResult] = useState<Result | null>(null)
+  const backendSaveStartedRef = useRef(false)
+  const { user } = useUser()
   const current = remainingItems[0]
   const elapsedSeconds = startedAt === null ? 0 : Math.floor((now - startedAt) / 1000)
   const isEnded = endedResult !== null
@@ -88,6 +92,27 @@ function TypeCapitalPage() {
       // Keep the result visible even when browser storage is unavailable.
     }
     setEndedResult(result)
+    if (!backendSaveStartedRef.current && user) {
+      backendSaveStartedRef.current = true
+      const countryResults = baseQuizItems.map((item) => ({
+        countryId: item.countryId,
+        outcome: foundIds.includes(item.countryId) ? 'correct' as const : 'incorrect' as const,
+      }))
+      void ensureBackendProfile(user)
+        .then((profile) => createBackendQuizAttempt(profile.id, {
+          categoryId,
+          areaId,
+          modeId,
+          correctCount: result.completed,
+          totalQuestions: result.total,
+          durationMs: result.elapsedSeconds * 1000,
+          startedAt: new Date(startedAt ?? Date.now()).toISOString(),
+          finishedAt: result.endedAt,
+          status: result.status,
+          countryResults,
+        }))
+        .catch((error: unknown) => console.error('Nie udało się zapisać wyniku quizu w backendzie:', error))
+    }
   }
 
   function skipCurrent() {

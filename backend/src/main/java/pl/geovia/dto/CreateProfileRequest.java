@@ -9,7 +9,7 @@ public record CreateProfileRequest(
         @Size(max = 30, message = "Username cannot exceed 30 characters")
         String username,
 
-        @Size(max = 2048, message = "Avatar URL cannot exceed 2048 characters")
+        @Size(max = 3000000, message = "Avatar data cannot exceed 3 MB")
         String avatarUrl,
 
         @Size(max = 300, message = "Bio cannot exceed 300 characters")

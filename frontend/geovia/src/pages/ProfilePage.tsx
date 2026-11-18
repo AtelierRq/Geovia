@@ -19,10 +19,18 @@ import { ComposableMap, Geographies, Geography, ZoomableGroup } from "react-simp
 import geoviaWorldCountries from "../data/map/geoviaWorldCountries.json";
 import geoviaWorldBorders from "../data/map/geoviaWorldBorders.json";
 import { useUser } from "../context/UserContext";
+import {
+  getBackendProfileAttempts,
+  getBackendProfileStats,
+  getBackendCountryKnowledge,
+  type BackendQuizAttempt,
+  type BackendProfileStats,
+  type BackendCountryKnowledgeItem,
+} from "../api/profile";
 import { countries } from "../data/countries";
 import { getCapitalForCountry } from "../data/capitals";
 import { getCountryFlag } from "../data/countryFlags";
-import { calculateCountryKnowledge, getCountryKnowledgeStatusLabel, type CountryMapStatus, type KnowledgeStatus } from "../utils/countryKnowledge";
+import { getCountryKnowledgeStatusLabel, type CountryMapStatus, type KnowledgeStatus } from "../utils/countryKnowledge";
 import "../styles/profile.css";
 
 type KnowledgeElementKey = "name" | "capital" | "flag";
@@ -78,17 +86,6 @@ const MODE_NAMES: Record<string, string> = {
   "type-capital": "Wpisz stolicę",
 };
 
-function readResults(): QuizResult[] {
-  try {
-    const value = JSON.parse(
-      localStorage.getItem("geovia.quizResults") ?? "[]",
-    );
-    return Array.isArray(value) ? value : [];
-  } catch {
-    return [];
-  }
-}
-
 function formatDuration(seconds: number) {
   return `${Math.floor(seconds / 60)} min ${seconds % 60} s`;
 }
@@ -104,33 +101,78 @@ function formatDate(value: string) {
 }
 
 function ProfilePage() {
-  const { user } = useUser();
-  const results = useMemo(
-    () =>
-      readResults().sort(
-        (a, b) => new Date(b.endedAt).getTime() - new Date(a.endedAt).getTime(),
-      ),
-    [],
-  );
+  const { user, backendProfile, profileLoading, profileError } = useUser();
+  const [results, setResults] = useState<QuizResult[]>([]);
+  const [profileStats, setProfileStats] = useState<BackendProfileStats | null>(null);
+  const [backendKnowledge, setBackendKnowledge] = useState<BackendCountryKnowledgeItem[]>([]);
+  const [dataLoading, setDataLoading] = useState(false);
+  const [dataError, setDataError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!backendProfile?.id) return;
+    let active = true;
+    setDataLoading(true);
+    setDataError(null);
+    Promise.all([
+      getBackendProfileAttempts(backendProfile.id),
+      getBackendProfileStats(backendProfile.id),
+      getBackendCountryKnowledge(backendProfile.id),
+    ])
+      .then(([attempts, stats, knowledge]) => {
+        if (!active) return;
+        const mappedResults: QuizResult[] = attempts.map((attempt: BackendQuizAttempt) => ({
+          id: attempt.id,
+          categoryId: attempt.categoryId,
+          areaId: attempt.areaId,
+          modeId: attempt.modeId,
+          completed: attempt.correctCount,
+          total: attempt.totalQuestions,
+          percentage: Number(attempt.scorePercent),
+          elapsedSeconds: Math.round(attempt.durationMs / 1000),
+          endedAt: attempt.finishedAt,
+          status: attempt.status === 'completed' ? 'completed' : 'ended-early',
+          foundCountries: attempt.countryResults.filter((item) => item.outcome === 'correct').map((item) => item.countryId),
+        }));
+        setResults(mappedResults);
+        setProfileStats(stats);
+        setBackendKnowledge(knowledge.countries);
+      })
+      .catch((error: unknown) => {
+        if (active) setDataError(error instanceof Error ? error.message : 'Nie udało się pobrać danych profilu.');
+      })
+      .finally(() => {
+        if (active) setDataLoading(false);
+      });
+    return () => { active = false; };
+  }, [backendProfile?.id]);
 
   const thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
-  const recentResults = results.filter(
-    (result) => new Date(result.endedAt).getTime() >= thirtyDaysAgo,
-  );
-  const correctAnswers = results.reduce(
-    (sum, result) => sum + (Number(result.completed) || 0),
-    0,
-  );
-  const averageScore = results.length
-    ? Math.round(
-        results.reduce(
-          (sum, result) => sum + (Number(result.percentage) || 0),
-          0,
-        ) / results.length,
-      )
+  const recentResults = results.filter((result) => new Date(result.endedAt).getTime() >= thirtyDaysAgo);
+  const correctAnswers = profileStats?.totalCorrectAnswers ?? results.reduce((sum, result) => sum + (Number(result.completed) || 0), 0);
+  const averageScore = profileStats ? Math.round(Number(profileStats.averageScorePercent)) : results.length
+    ? Math.round(results.reduce((sum, result) => sum + (Number(result.percentage) || 0), 0) / results.length)
     : 0;
   const lastResult = results[0];
-  const countryKnowledge = useMemo(() => calculateCountryKnowledge(results), [results]);
+  const serverKnowledgeById = useMemo(() => new Map(backendKnowledge.map((item) => [item.countryId, item])), [backendKnowledge]);
+  const countryKnowledge = useMemo(() => countries.map((country) => {
+    const item = serverKnowledgeById.get(country.id);
+    const name = item?.nameStatus ?? 'unknown';
+    const capital = item?.capitalStatus ?? 'unknown';
+    const flag = item?.flagStatus ?? 'unknown';
+    const overall = item?.overallStatus ?? 'unknown';
+    return {
+      countryId: country.id,
+      name,
+      capital,
+      flag,
+      overall,
+      evidence: {
+        name: item?.nameEvidence ?? 0,
+        capital: item?.capitalEvidence ?? 0,
+        flag: item?.flagEvidence ?? 0,
+      },
+    };
+  }), [serverKnowledgeById]);
   const knowledgeCounts = countryKnowledge.reduce(
     (counts, item) => { counts[item.overall] += 1; return counts; },
     { unknown: 0, "needs-work": 0, learning: 0, mastered: 0 } as Record<CountryMapStatus, number>,
@@ -223,6 +265,12 @@ function ProfilePage() {
   if (!user) return <Navigate to="/login" replace />;
   return (
     <main className="profile-page">
+      {(profileError || dataError) && (
+        <div className="account-info-note" role="alert">
+          Nie udało się zsynchronizować danych profilu: {profileError ?? dataError}
+        </div>
+      )}
+      {(profileLoading || dataLoading) && <p className="profile-section-caption">Pobieranie danych profilu z serwera…</p>}
       <section className="profile-heading">
         <div>
           <span className="eyebrow">TWOJA PRZESTRZEŃ</span>
@@ -250,7 +298,7 @@ function ProfilePage() {
           {user.city && <p>{user.city}</p>}
           {user.bio && <p className="profile-bio-preview">{user.bio}</p>}
           <span className="profile-local-note">
-            Profil użytkownika
+            {profileLoading ? "Synchronizowanie profilu…" : "Profil połączony z backendem"}
           </span>
         </div>
         <Link to="/profile/edit" className="profile-edit-link">
@@ -273,7 +321,7 @@ function ProfilePage() {
               <Trophy size={20} />
             </div>
             <span>Quizy łącznie</span>
-            <strong>{results.length}</strong>
+            <strong>{profileStats?.totalAttempts ?? results.length}</strong>
             <small>od początku korzystania</small>
           </article>
           <article className="profile-stat-card">
@@ -281,7 +329,7 @@ function ProfilePage() {
               <CalendarDays size={20} />
             </div>
             <span>Ostatnie 30 dni</span>
-            <strong>{recentResults.length}</strong>
+            <strong>{profileStats?.attemptsLast30Days ?? recentResults.length}</strong>
             <small>rozegrane quizy</small>
           </article>
           <article className="profile-stat-card">
@@ -306,8 +354,8 @@ function ProfilePage() {
           <div>
             <strong>Ostatnia aktywność</strong>
             <span>
-              {lastResult
-                ? `${formatDate(lastResult.endedAt)} · ${CATEGORY_NAMES[lastResult.categoryId] ?? lastResult.categoryId}`
+              {profileStats?.lastAttemptAt
+                ? `${formatDate(profileStats.lastAttemptAt)}${lastResult ? ` · ${CATEGORY_NAMES[lastResult.categoryId] ?? lastResult.categoryId}` : ""}`
                 : "Brak zapisanych rozgrywek"}
             </span>
           </div>

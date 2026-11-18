@@ -1,4 +1,4 @@
-import type { DemoUser } from '../context/UserContext'
+import { ensureBackendProfile as ensureProfile } from './profile'
 
 const API_BASE = '/api'
 
@@ -67,23 +67,9 @@ export function getTodayChallenge() {
   return request<DailyChallenge>('/daily-challenges/today')
 }
 
-export function ensureBackendProfile(user: DemoUser): Promise<{ id: string }> {
-  const key = `geovia.backendProfileId.${user.email.toLowerCase()}`
-  const storedId = localStorage.getItem(key)
-  if (storedId) return Promise.resolve({ id: storedId })
-
-  return request<{ id: string }>('/profiles/ensure', {
-    method: 'POST',
-    body: JSON.stringify({
-      username: user.username,
-      bio: user.bio,
-      city: user.city,
-      avatarUrl: null,
-    }),
-  }).then((profile) => {
-    localStorage.setItem(key, profile.id)
-    return profile
-  })
+export async function ensureBackendProfile(user: import('../context/UserContext').DemoUser): Promise<{ id: string }> {
+  const profile = await ensureProfile(user)
+  return { id: profile.id }
 }
 
 export function startDailyChallengeAttempt(challengeId: string, profileId: string) {

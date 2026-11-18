@@ -71,7 +71,7 @@ function AccountPage() {
             </label>
             <div className="account-info-note">
               <strong>Weryfikacja adresu e-mail</strong>
-              <p>Wysyłanie wiadomości potwierdzającej będzie dostępne po podłączeniu backendu.</p>
+              <p>Adres e-mail należy obecnie do lokalnego profilu demonstracyjnego. Nie jest jeszcze przechowywany w tabeli profili backendu.</p>
             </div>
             <div className="account-form-actions">
               <button className="primary-button" type="submit">
