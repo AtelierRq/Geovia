@@ -64,6 +64,18 @@ public class DailyChallengeService {
         return toChallengeResponse(challenge);
     }
 
+    @Transactional(readOnly = true)
+    public boolean ownsProfile(UUID profileId, UUID accountId) {
+        return profileRepository.existsByIdAndAccount_Id(profileId, accountId);
+    }
+
+    @Transactional(readOnly = true)
+    public boolean ownsSession(UUID sessionId, UUID accountId) {
+        return sessionRepository.findById(sessionId)
+                .map(session -> session.getUser().getAccount() != null && accountId.equals(session.getUser().getAccount().getId()))
+                .orElse(false);
+    }
+
     private DailyChallenge createPublishedChallenge(LocalDate date) {
         DailyChallenge challenge = new DailyChallenge();
         challenge.setChallengeDate(date);

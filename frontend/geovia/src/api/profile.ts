@@ -1,7 +1,6 @@
 import type { DemoUser } from '../context/UserContext'
 
 const API_BASE = '/api'
-const PROFILE_ID_PREFIX = 'geovia.backendProfileId.'
 
 export type BackendProfile = {
   id: string
@@ -51,6 +50,7 @@ export type BackendCountryKnowledgeItem = {
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(`${API_BASE}${path}`, {
     ...init,
+    credentials: 'include',
     headers: { 'Content-Type': 'application/json', ...init?.headers },
   })
 
@@ -62,34 +62,29 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return response.json() as Promise<T>
 }
 
-function profileStorageKey(email: string) {
-  return `${PROFILE_ID_PREFIX}${email.trim().toLowerCase()}`
-}
-
 export async function ensureBackendProfile(user: DemoUser): Promise<BackendProfile> {
-  const key = profileStorageKey(user.email)
-  const storedId = localStorage.getItem(key)
-
-  if (storedId) {
-    try {
-      return await request<BackendProfile>(`/profiles/${encodeURIComponent(storedId)}`)
-    } catch {
-      localStorage.removeItem(key)
-    }
-  }
-
-  const profile = await request<BackendProfile>('/profiles/ensure', {
-    method: 'POST',
-    body: JSON.stringify({
-      username: user.username,
-      avatarUrl: user.avatar,
-      bio: user.bio,
-      city: user.city,
-    }),
-  })
-  localStorage.setItem(key, profile.id)
-  return profile
+  void user
+  return getCurrentAccount().then((account) => account.profile)
 }
+
+export type AuthAccount = { id: string; email: string; emailVerified: boolean; profileId: string; username: string; avatarUrl: string | null; bio: string | null; city: string | null }
+export type AuthSession = AuthAccount & { profile: BackendProfile }
+
+export async function getCurrentAccount(): Promise<AuthSession> {
+  const account = await request<AuthAccount>('/auth/me')
+  return { ...account, profile: { id: account.profileId, username: account.username, avatarUrl: account.avatarUrl, bio: account.bio, city: account.city, guestImportStatus: 'pending', createdAt: '', updatedAt: '' } }
+}
+export function registerAccount(email: string, password: string, username: string) {
+  return request<void>('/auth/register', { method: 'POST', body: JSON.stringify({ email, password, username }) })
+}
+export async function loginAccount(email: string, password: string) {
+  await request<AuthAccount>('/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) })
+  return getCurrentAccount()
+}
+export function logoutAccount() { return request<void>('/auth/logout', { method: 'POST' }) }
+export function verifyEmailToken(token: string) { return request<void>('/auth/verify-email', { method: 'POST', body: JSON.stringify({ token }) }) }
+export function requestEmailChange(email: string) { return request<void>('/auth/email', { method: 'POST', body: JSON.stringify({ email }) }) }
+export function changeAccountPassword(currentPassword: string, newPassword: string) { return request<void>('/auth/password', { method: 'POST', body: JSON.stringify({ currentPassword, newPassword }) }) }
 
 export async function updateBackendProfile(profileId: string, user: DemoUser): Promise<BackendProfile> {
   return request<BackendProfile>(`/profiles/${encodeURIComponent(profileId)}`, {

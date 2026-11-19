@@ -622,6 +622,34 @@
   cursor: pointer;
 }
 
+.auth-form {
+  width: 100%;
+  text-align: left;
+}
+
+.auth-form .auth-action {
+  justify-content: center;
+}
+
+.form-error,
+.form-success {
+  width: 100%;
+  margin: 12px 0;
+  padding: 11px 13px;
+  border-radius: 8px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.form-error { color: #8c302b; background: #fff0ed; }
+.form-success { color: #236b48; background: #edf8f1; }
+
+.account-back-link {
+  margin-top: 18px;
+  color: var(--green-dark);
+  font-size: 13px;
+}
+
 .auth-card 
 .secondary-button {
   border: 1px solid var(--border);

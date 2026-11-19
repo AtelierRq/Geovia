@@ -1,155 +1,61 @@
-import { useState, type FormEvent } from "react";
-import {
-  ArrowLeft,
-  CheckCircle2,
-  KeyRound,
-  LogOut,
-  Mail,
-  ShieldCheck,
-  Trash2,
-} from "lucide-react";
-import { Link, Navigate, useNavigate } from "react-router-dom";
-import { useUser } from "../context/UserContext";
-import "../styles/profile.css";
+import { useState, type FormEvent } from 'react'
+import { ArrowLeft, KeyRound, LogOut, Mail, ShieldCheck } from 'lucide-react'
+import { Link, Navigate, useNavigate } from 'react-router-dom'
+import { useUser } from '../context/UserContext'
+import '../styles/profile.css'
 
 function AccountPage() {
-  const { user, updateUser, signOut } = useUser();
-  const navigate = useNavigate();
-  const [email, setEmail] = useState(user?.email ?? "");
-  const [saved, setSaved] = useState(false);
+  const { user, changeEmail, changePassword, signOut } = useUser()
+  const navigate = useNavigate()
+  const [email, setEmail] = useState('')
+  const [currentPassword, setCurrentPassword] = useState('')
+  const [newPassword, setNewPassword] = useState('')
+  const [message, setMessage] = useState('')
+  const [error, setError] = useState('')
+  const [busy, setBusy] = useState(false)
+  if (!user) return <Navigate to="/login" replace />
 
-  if (!user) return <Navigate to="/login" replace />;
-
-  function saveEmail(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    updateUser({ email: email.trim() });
-    setSaved(true);
+  async function submitEmail(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault(); setBusy(true); setError(''); setMessage('')
+    try { await changeEmail(email.trim()); setEmail(''); setMessage('Wysłaliśmy link potwierdzający na nowy adres. Zmiana zacznie obowiązywać po kliknięciu linku.') }
+    catch (reason) { setError(reason instanceof Error ? reason.message : 'Nie udało się zlecić zmiany adresu.') }
+    finally { setBusy(false) }
   }
-
-  function logout() {
-    signOut();
-    navigate("/");
+  async function submitPassword(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault(); setBusy(true); setError(''); setMessage('')
+    try { await changePassword(currentPassword, newPassword); setCurrentPassword(''); setNewPassword(''); setMessage('Hasło zostało zmienione. Pozostałe sesje zostały wylogowane.') }
+    catch (reason) { setError(reason instanceof Error ? reason.message : 'Nie udało się zmienić hasła.') }
+    finally { setBusy(false) }
   }
+  async function logout() { await signOut(); navigate('/') }
 
-  return (
-    <main className="profile-page account-page">
-      <div className="account-back-row">
-        <Link to="/profile">
-          <ArrowLeft size={17} /> Wróć do profilu
-        </Link>
-      </div>
-
-      <section className="profile-heading">
-        <div>
-          <span className="eyebrow">KONTO I BEZPIECZEŃSTWO</span>
-          <h1>Ustawienia konta</h1>
-          <p>Zarządzaj adresem e-mail, hasłem i bezpieczeństwem konta.</p>
-        </div>
+  return <main className="profile-page account-page">
+    <div className="account-back-row"><Link to="/profile"><ArrowLeft size={17} /> Wróć do profilu</Link></div>
+    <section className="profile-heading"><div><span className="eyebrow">KONTO I BEZPIECZEŃSTWO</span><h1>Ustawienia konta</h1><p>Zarządzaj adresem e-mail i hasłem swojego konta.</p></div></section>
+    <div className="account-settings-layout">
+      <section className="account-card account-settings-card">
+        <div className="settings-section-title"><div className="settings-icon"><Mail size={20} /></div><div><h2>Adres e-mail</h2><p>Aktualny adres logowania: <strong>{user.email}</strong></p></div></div>
+        <form className="account-form" onSubmit={submitEmail}>
+          <label>Nowy adres e-mail<input type="email" value={email} onChange={event => setEmail(event.target.value)} required maxLength={254} autoComplete="email" /></label>
+          <p className="settings-description">Nowy adres zacznie obowiązywać po potwierdzeniu linkiem wysłanym na tę skrzynkę.</p>
+          <button className="primary-button" type="submit" disabled={busy}>Wyślij link potwierdzający</button>
+        </form>
       </section>
-
-      <div className="account-settings-layout">
-        <section className="account-card account-settings-card">
-          <div className="settings-section-title">
-            <div className="settings-icon"><Mail size={20} /></div>
-            <div>
-              <h2>Adres e-mail</h2>
-              <p>Adres używany do logowania i kontaktu z Geovią.</p>
-            </div>
-          </div>
-          <form className="account-form" onSubmit={saveEmail}>
-            <label>
-              Adres e-mail
-              <input
-                type="email"
-                value={email}
-                onChange={(event) => {
-                  setEmail(event.target.value);
-                  setSaved(false);
-                }}
-                required
-              />
-            </label>
-            <div className="account-info-note">
-              <strong>Weryfikacja adresu e-mail</strong>
-              <p>Adres e-mail należy obecnie do lokalnego profilu demonstracyjnego. Nie jest jeszcze przechowywany w tabeli profili backendu.</p>
-            </div>
-            <div className="account-form-actions">
-              <button className="primary-button" type="submit">
-                Zapisz adres e-mail
-              </button>
-              {saved && <span className="account-saved-message">Zmiany zapisane lokalnie.</span>}
-            </div>
-          </form>
-        </section>
-
-        <section className="account-card account-settings-card">
-          <div className="settings-section-title">
-            <div className="settings-icon"><KeyRound size={20} /></div>
-            <div>
-              <h2>Hasło</h2>
-              <p>Chroń dostęp do swojego konta.</p>
-            </div>
-          </div>
-          <p className="settings-description">Zmiana hasła będzie dostępna po wdrożeniu prawdziwego systemu logowania.</p>
-          <button type="button" className="secondary-button" disabled>
-            Zmień hasło
-          </button>
-          <span className="coming-soon-label">W przygotowaniu</span>
-        </section>
-
-        <section className="account-card account-settings-card">
-          <div className="settings-section-title">
-            <div className="settings-icon"><ShieldCheck size={20} /></div>
-            <div>
-              <h2>Bezpieczeństwo</h2>
-              <p>Dodatkowe opcje ochrony konta.</p>
-            </div>
-          </div>
-          <div className="settings-option-row">
-            <div>
-              <strong>Potwierdzenie adresu e-mail</strong>
-              <p>Potwierdzanie adresu zostanie dodane wraz z backendem.</p>
-            </div>
-            <span className="coming-soon-label">W przygotowaniu</span>
-          </div>
-          <div className="settings-option-row">
-            <div>
-              <strong>Aktywne sesje</strong>
-              <p>W przyszłości będzie można sprawdzać i kończyć inne sesje.</p>
-            </div>
-            <span className="coming-soon-label">W przygotowaniu</span>
-          </div>
-        </section>
-
-        <section className="account-card account-settings-card account-danger-card">
-          <div className="settings-section-title">
-            <div className="settings-icon danger-icon"><Trash2 size={20} /></div>
-            <div>
-              <h2>Usuwanie konta</h2>
-              <p>Trwałe usunięcie konta i powiązanych z nim danych.</p>
-            </div>
-          </div>
-          <p className="settings-description">Ta opcja nie jest dostępna w trybie demonstracyjnym.</p>
-          <button type="button" className="danger-outline-button" disabled>
-            <Trash2 size={16} /> Usuń konto
-          </button>
-        </section>
-      </div>
-
-      <section className="account-logout-section">
-        <div>
-          <h2>Wylogowanie</h2>
-          <p>Wyloguj się z bieżącego konta demonstracyjnego na tej przeglądarce.</p>
-        </div>
-        <button className="account-logout-button" type="button" onClick={logout}>
-          <LogOut size={17} /> Wyloguj
-        </button>
+      <section className="account-card account-settings-card">
+        <div className="settings-section-title"><div className="settings-icon"><KeyRound size={20} /></div><div><h2>Hasło</h2><p>Hasło jest przechowywane w postaci bezpiecznego skrótu.</p></div></div>
+        <form className="account-form" onSubmit={submitPassword}>
+          <label>Obecne hasło<input type="password" value={currentPassword} onChange={event => setCurrentPassword(event.target.value)} required autoComplete="current-password" /></label>
+          <label>Nowe hasło<input type="password" value={newPassword} onChange={event => setNewPassword(event.target.value)} required minLength={10} maxLength={128} autoComplete="new-password" /><span className="field-help">Co najmniej 10 znaków.</span></label>
+          <button className="primary-button" type="submit" disabled={busy}>Zmień hasło</button>
+        </form>
       </section>
-      <p className="account-demo-footnote">
-        <CheckCircle2 size={15} /> Geovia korzysta obecnie z demonstracyjnego konta. Opcje wymagające serwera są oznaczone jako „W przygotowaniu”.
-      </p>
-    </main>
-  );
+      <section className="account-card account-settings-card">
+        <div className="settings-section-title"><div className="settings-icon"><ShieldCheck size={20} /></div><div><h2>Bezpieczeństwo</h2><p>Sesja logowania jest przechowywana w ciasteczku HttpOnly.</p></div></div>
+        <p className="settings-description">Adres e-mail służy do logowania. Zmiany wymagają potwierdzenia nowego adresu.</p>
+      </section>
+    </div>
+    {(error || message) && <p className={error ? 'form-error' : 'form-success'} role={error ? 'alert' : 'status'}>{error || message}</p>}
+    <section className="account-logout-section"><div><h2>Wylogowanie</h2><p>Wyloguj się z bieżącej sesji.</p></div><button className="account-logout-button" type="button" onClick={logout}><LogOut size={17} /> Wyloguj</button></section>
+  </main>
 }
-
-export default AccountPage;
+export default AccountPage

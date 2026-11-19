@@ -51,15 +51,15 @@ function ProfileEditPage() {
     setSaved(false);
   }
 
-  function save(event: FormEvent<HTMLFormElement>) {
+  async function save(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    updateUser({
-      username: username.trim(),
-      bio: bio.trim(),
-      city: city.trim(),
-    });
-    setSaved(true);
-    navigate("/profile");
+    try {
+      await updateUser({ username: username.trim(), bio: bio.trim(), city: city.trim() });
+      setSaved(true);
+      navigate("/profile");
+    } catch {
+      setSaved(false);
+    }
   }
 
   return (

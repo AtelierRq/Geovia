@@ -1,163 +1,75 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react'
 import {
-  ensureBackendProfile,
-  updateBackendProfile,
-  type BackendProfile,
+  changeAccountPassword, getCurrentAccount, loginAccount, logoutAccount,
+  registerAccount, requestEmailChange, updateBackendProfile, type BackendProfile,
 } from '../api/profile'
 
-export type DemoUser = {
-  username: string
-  email: string
-  avatar: string | null
-  bio: string
-  city: string
-}
-
+export type DemoUser = { username: string; email: string; avatar: string | null; bio: string; city: string }
+type ProfileUpdates = Partial<Omit<DemoUser, 'email'>>
 type UserContextValue = {
   user: DemoUser | null
   backendProfile: BackendProfile | null
   profileLoading: boolean
   profileError: string | null
-  signInDemo: () => void
-  signOut: () => void
-  updateUser: (updates: Partial<DemoUser>) => Promise<void>
+  login: (email: string, password: string) => Promise<void>
+  register: (email: string, password: string, username: string) => Promise<void>
+  signOut: () => Promise<void>
+  updateUser: (updates: ProfileUpdates) => Promise<void>
+  changeEmail: (email: string) => Promise<void>
+  changePassword: (currentPassword: string, newPassword: string) => Promise<void>
   refreshBackendProfile: () => Promise<void>
 }
-
-const USER_KEY = 'geovia.demoUser'
 const UserContext = createContext<UserContextValue | null>(null)
-
-function readUser(): DemoUser | null {
-  try {
-    const value = JSON.parse(localStorage.getItem(USER_KEY) ?? 'null') as Partial<DemoUser> | null
-    if (!value) return null
-    return {
-      username: value.username ?? 'GeoviaUser',
-      email: value.email ?? 'uzytkownik@example.com',
-      avatar: value.avatar ?? null,
-      bio: value.bio ?? '',
-      city: value.city ?? '',
-    }
-  } catch {
-    return null
-  }
-}
-
-function toDemoUser(profile: BackendProfile, current: DemoUser): DemoUser {
-  return {
-    ...current,
-    username: profile.username,
-    avatar: profile.avatarUrl,
-    bio: profile.bio ?? '',
-    city: profile.city ?? '',
-  }
+function toUser(account: Awaited<ReturnType<typeof getCurrentAccount>>): DemoUser {
+  return { username: account.profile.username, email: account.email, avatar: account.profile.avatarUrl, bio: account.profile.bio ?? '', city: account.profile.city ?? '' }
 }
 
 export function UserProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<DemoUser | null>(readUser)
+  const [user, setUser] = useState<DemoUser | null>(null)
   const [backendProfile, setBackendProfile] = useState<BackendProfile | null>(null)
-  const [profileLoading, setProfileLoading] = useState(false)
+  const [profileLoading, setProfileLoading] = useState(true)
   const [profileError, setProfileError] = useState<string | null>(null)
-
   const refreshBackendProfile = useCallback(async () => {
-    if (!user) {
-      setBackendProfile(null)
-      return
+    try {
+      const account = await getCurrentAccount()
+      setUser(toUser(account)); setBackendProfile(account.profile); setProfileError(null)
+    } catch (error) {
+      setUser(null); setBackendProfile(null)
+      if (error instanceof Error && !error.message.includes('(401)')) setProfileError(error.message)
+      throw error
     }
-    setProfileLoading(true)
+  }, [])
+  useEffect(() => {
+    refreshBackendProfile().catch(() => undefined).finally(() => setProfileLoading(false))
+  }, [refreshBackendProfile])
+  async function login(email: string, password: string) {
+    const account = await loginAccount(email, password)
+    setUser(toUser(account)); setBackendProfile(account.profile); setProfileError(null)
+  }
+  async function register(email: string, password: string, username: string) {
+    await registerAccount(email, password, username)
+  }
+  async function signOut() {
+    await logoutAccount()
+    setUser(null); setBackendProfile(null); setProfileError(null)
+  }
+  async function updateUser(updates: ProfileUpdates) {
+    if (!user || !backendProfile) return
+    const next = { ...user, ...updates }
     setProfileError(null)
     try {
-      const profile = await ensureBackendProfile(user)
+      const profile = await updateBackendProfile(backendProfile.id, next)
       setBackendProfile(profile)
-      const synchronizedUser = toDemoUser(profile, user)
-      setUser(synchronizedUser)
-      localStorage.setItem(USER_KEY, JSON.stringify(synchronizedUser))
+      setUser({ ...next, username: profile.username, avatar: profile.avatarUrl, bio: profile.bio ?? '', city: profile.city ?? '' })
     } catch (error) {
-      setProfileError(error instanceof Error ? error.message : 'Nie udało się pobrać profilu.')
+      setProfileError(error instanceof Error ? error.message : 'Nie udało się zapisać profilu.')
       throw error
-    } finally {
-      setProfileLoading(false)
     }
-  }, [user])
-
-  useEffect(() => {
-    if (!user) {
-      setBackendProfile(null)
-      return
-    }
-    let active = true
-    setProfileLoading(true)
-    setProfileError(null)
-    ensureBackendProfile(user)
-      .then((profile) => {
-        if (!active) return
-        setBackendProfile(profile)
-        const synchronizedUser = toDemoUser(profile, user)
-        setUser(synchronizedUser)
-        localStorage.setItem(USER_KEY, JSON.stringify(synchronizedUser))
-      })
-      .catch((error: unknown) => {
-        if (active) setProfileError(error instanceof Error ? error.message : 'Nie udało się połączyć z backendem.')
-      })
-      .finally(() => {
-        if (active) setProfileLoading(false)
-      })
-    return () => { active = false }
-    // The profile bootstrap is keyed by the stable demo email. Updating profile
-    // fields must not trigger another ensure request after every server response.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.email])
-
-  function updateUser(updates: Partial<DemoUser>): Promise<void> {
-    if (!user) return Promise.resolve()
-    const next = { ...user, ...updates }
-    setUser(next)
-    localStorage.setItem(USER_KEY, JSON.stringify(next))
-
-    const hasProfileChanges = ['username', 'avatar', 'bio', 'city'].some((key) => key in updates)
-    if (!hasProfileChanges) return Promise.resolve()
-
-    return (async () => {
-      setProfileError(null)
-      try {
-        const currentProfile = backendProfile ?? await ensureBackendProfile(user)
-        const updatedProfile = await updateBackendProfile(currentProfile.id, next)
-        setBackendProfile(updatedProfile)
-        const synchronizedUser = toDemoUser(updatedProfile, next)
-        setUser(synchronizedUser)
-        localStorage.setItem(USER_KEY, JSON.stringify(synchronizedUser))
-      } catch (error) {
-        setProfileError(error instanceof Error ? error.message : 'Nie udało się zapisać profilu.')
-        throw error
-      }
-    })()
   }
+  async function changeEmail(email: string) { await requestEmailChange(email) }
+  async function changePassword(currentPassword: string, newPassword: string) { await changeAccountPassword(currentPassword, newPassword) }
 
-  function signInDemo() {
-    const demoUser = readUser() ?? {
-      username: 'GeoviaUser',
-      email: 'uzytkownik@example.com',
-      avatar: null,
-      bio: '',
-      city: '',
-    }
-    localStorage.setItem(USER_KEY, JSON.stringify(demoUser))
-    setBackendProfile(null)
-    setUser(demoUser)
-  }
-
-  function signOut() {
-    localStorage.removeItem(USER_KEY)
-    setUser(null)
-    setBackendProfile(null)
-    setProfileError(null)
-  }
-
-  return (
-    <UserContext.Provider value={{ user, backendProfile, profileLoading, profileError, signInDemo, signOut, updateUser, refreshBackendProfile }}>
-      {children}
-    </UserContext.Provider>
-  )
+  return <UserContext.Provider value={{ user, backendProfile, profileLoading, profileError, login, register, signOut, updateUser, changeEmail, changePassword, refreshBackendProfile }}>{children}</UserContext.Provider>
 }
 
 export function useUser() {

@@ -32,6 +32,7 @@ function App() {
           <Route path="/profile/edit" element={<ProfileEditPage />} />
           <Route path="/profile/account" element={<AccountPage />} />
           <Route path="/login" element={<AuthPage />} />
+          <Route path="/verify-email" element={<AuthPage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
         <Footer />

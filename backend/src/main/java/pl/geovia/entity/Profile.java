@@ -14,6 +14,10 @@ public class Profile {
     @Column(name = "id", nullable = false, updatable = false)
     private UUID id;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "account_id")
+    private Account account;
+
     @Column(name = "username", length = 50)
     private String username;
 
@@ -77,6 +81,9 @@ public class Profile {
     public UUID getId() {
         return id;
     }
+
+    public Account getAccount() { return account; }
+    public void setAccount(Account account) { this.account = account; }
 
     public void setId(UUID id) {
         this.id = id;
