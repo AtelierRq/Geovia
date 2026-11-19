@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { Compass, LogIn, UserRoundPlus } from 'lucide-react'
 import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom'
 import { useUser } from '../context/UserContext'
@@ -17,9 +17,12 @@ function AuthPage() {
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
+  const verificationStarted = useRef<string | null>(null)
 
   useEffect(() => {
     if (!verificationToken) return
+    if (verificationStarted.current === verificationToken) return
+    verificationStarted.current = verificationToken
     setBusy(true)
     verifyEmailToken(verificationToken)
       .then(async () => {

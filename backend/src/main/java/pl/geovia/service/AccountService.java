@@ -76,6 +76,8 @@ public class AccountService {
         EmailVerificationToken saved = verificationTokens.findByTokenHash(sha256(token))
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Link weryfikacyjny jest nieprawidłowy lub wygasł"));
         if (saved.getExpiresAt().isBefore(OffsetDateTime.now())) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Link weryfikacyjny jest nieprawidłowy lub wygasł");
+        if (verificationTokens.consumeByTokenHash(sha256(token)) != 1)
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Link weryfikacyjny został już użyty lub wygasł");
         Account account = accounts.findById(saved.getAccountId()).orElseThrow();
         if (account.getPendingEmail() != null) {
             if (accounts.findByEmailIgnoreCase(account.getPendingEmail()).filter(other -> !other.getId().equals(account.getId())).isPresent())
@@ -83,7 +85,7 @@ public class AccountService {
             account.setEmail(account.getPendingEmail()); account.setPendingEmail(null);
         }
         account.setEmailVerifiedAt(OffsetDateTime.now());
-        accounts.save(account); verificationTokens.delete(saved);
+        accounts.save(account);
     }
 
     public void requestEmailChange(UUID accountId, ChangeEmailRequest request) {

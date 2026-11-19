@@ -59,7 +59,9 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     throw new Error(body?.message ?? body?.detail ?? `Błąd serwera (${response.status})`)
   }
   if (response.status === 204) return undefined as T
-  return response.json() as Promise<T>
+  const body = await response.text()
+  if (!body.trim()) return undefined as T
+  return JSON.parse(body) as T
 }
 
 export async function ensureBackendProfile(user: DemoUser): Promise<BackendProfile> {
