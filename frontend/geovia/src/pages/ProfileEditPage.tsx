@@ -163,8 +163,8 @@ function ProfileEditPage() {
           </label>
 
           <div className="account-info-note">
-            <strong>Profil demonstracyjny</strong>
-            <p>Zmiany są zapisywane lokalnie w tej przeglądarce. Po wdrożeniu kont użytkowników będzie można zdecydować, które informacje są widoczne publicznie.</p>
+            <strong>Twój profil</strong>
+            <p>Zmiany są zapisywane na koncie i będą dostępne po zalogowaniu w innej przeglądarce.</p>
           </div>
 
           <div className="account-form-actions">

@@ -87,6 +87,13 @@ export function logoutAccount() { return request<void>('/auth/logout', { method:
 export function verifyEmailToken(token: string) { return request<void>('/auth/verify-email', { method: 'POST', body: JSON.stringify({ token }) }) }
 export function requestEmailChange(email: string) { return request<void>('/auth/email', { method: 'POST', body: JSON.stringify({ email }) }) }
 export function changeAccountPassword(currentPassword: string, newPassword: string) { return request<void>('/auth/password', { method: 'POST', body: JSON.stringify({ currentPassword, newPassword }) }) }
+export type AccountSession = { id: string; createdAt: string; expiresAt: string; userAgent: string | null; current: boolean }
+export function resendVerification(email: string) { return request<{ message: string }>('/auth/resend-verification', { method: 'POST', body: JSON.stringify({ email }) }) }
+export function requestPasswordReset(email: string) { return request<{ message: string }>('/auth/password/forgot', { method: 'POST', body: JSON.stringify({ email }) }) }
+export function resetPassword(token: string, newPassword: string) { return request<void>('/auth/password/reset', { method: 'POST', body: JSON.stringify({ token, newPassword }) }) }
+export function getAccountSessions() { return request<AccountSession[]>('/auth/sessions') }
+export function revokeAccountSession(sessionId: string) { return request<void>(`/auth/sessions/${encodeURIComponent(sessionId)}`, { method: 'DELETE' }) }
+export function deleteAccount(email: string, password: string) { return request<void>('/auth/account', { method: 'DELETE', body: JSON.stringify({ email, password }) }) }
 
 export async function updateBackendProfile(profileId: string, user: DemoUser): Promise<BackendProfile> {
   return request<BackendProfile>(`/profiles/${encodeURIComponent(profileId)}`, {

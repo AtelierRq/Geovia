@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react'
 import {
-  changeAccountPassword, getCurrentAccount, loginAccount, logoutAccount,
+  changeAccountPassword, deleteAccount as deleteAccountRequest, getCurrentAccount, loginAccount, logoutAccount,
   registerAccount, requestEmailChange, updateBackendProfile, type BackendProfile,
 } from '../api/profile'
 
@@ -17,6 +17,7 @@ type UserContextValue = {
   updateUser: (updates: ProfileUpdates) => Promise<void>
   changeEmail: (email: string) => Promise<void>
   changePassword: (currentPassword: string, newPassword: string) => Promise<void>
+  deleteAccount: (email: string, password: string) => Promise<void>
   refreshBackendProfile: () => Promise<void>
 }
 const UserContext = createContext<UserContextValue | null>(null)
@@ -68,8 +69,12 @@ export function UserProvider({ children }: { children: ReactNode }) {
   }
   async function changeEmail(email: string) { await requestEmailChange(email) }
   async function changePassword(currentPassword: string, newPassword: string) { await changeAccountPassword(currentPassword, newPassword) }
+  async function deleteAccount(email: string, password: string) {
+    await deleteAccountRequest(email, password)
+    setUser(null); setBackendProfile(null); setProfileError(null)
+  }
 
-  return <UserContext.Provider value={{ user, backendProfile, profileLoading, profileError, login, register, signOut, updateUser, changeEmail, changePassword, refreshBackendProfile }}>{children}</UserContext.Provider>
+  return <UserContext.Provider value={{ user, backendProfile, profileLoading, profileError, login, register, signOut, updateUser, changeEmail, changePassword, deleteAccount, refreshBackendProfile }}>{children}</UserContext.Provider>
 }
 
 export function useUser() {

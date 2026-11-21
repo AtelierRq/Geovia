@@ -11,10 +11,16 @@ public class AccountSession {
     @Column(name = "token_hash", nullable = false, length = 64) private String tokenHash;
     @Column(name = "expires_at", nullable = false) private OffsetDateTime expiresAt;
     @Column(name = "created_at", nullable = false, updatable = false) private OffsetDateTime createdAt;
+    @Column(name = "user_agent", length = 512) private String userAgent;
     protected AccountSession() {}
-    public AccountSession(UUID id, UUID accountId, String tokenHash, OffsetDateTime expiresAt) {
-        this.id=id; this.accountId=accountId; this.tokenHash=tokenHash; this.expiresAt=expiresAt;
+    public AccountSession(UUID id, UUID accountId, String tokenHash, OffsetDateTime expiresAt, String userAgent) {
+        this.id=id; this.accountId=accountId; this.tokenHash=tokenHash; this.expiresAt=expiresAt; this.userAgent=userAgent;
     }
     @PrePersist protected void onCreate() { if (createdAt == null) createdAt = OffsetDateTime.now(); }
+    public UUID getId() { return id; }
     public UUID getAccountId() { return accountId; }
+    public String getTokenHash() { return tokenHash; }
+    public OffsetDateTime getExpiresAt() { return expiresAt; }
+    public OffsetDateTime getCreatedAt() { return createdAt; }
+    public String getUserAgent() { return userAgent; }
 }

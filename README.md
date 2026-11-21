@@ -16,4 +16,8 @@ Uruchomienie:
 
 Rejestracja i zmiana adresu e-mail wysyłają link weryfikacyjny przez SMTP. Ustaw zmienne środowiskowe backendu `SMTP_HOST`, `SMTP_PORT`, `SMTP_USERNAME`, `SMTP_PASSWORD`, `SMTP_AUTH`, `SMTP_STARTTLS` oraz `MAIL_FROM`. Linki kierują na `APP_BASE_URL` (domyślnie `http://localhost:5173`). W produkcji ustaw też `AUTH_COOKIE_SECURE=true` i używaj HTTPS.
 
-Po uruchomieniu aplikacji migracja Flyway V3 tworzy tabele kont, sesji i tokenów weryfikacyjnych oraz wiąże nowe profile z kontami. Dotychczasowe profile pozostają w bazie bez przypisanego konta.
+Po uruchomieniu aplikacji migracje Flyway V3–V4 tworzą tabele kont, sesji oraz tokenów weryfikacyjnych i resetujących hasło. Starsze profile sprzed wprowadzenia kont pozostają w bazie bez przypisanego konta; usunięcie konta usuwa powiązany z nim profil i wyniki quizów.
+
+
+Uruchamianie Mailpit w osobnym terminalu:
+**docker run --rm -p 1025:1025 -p 8025:8025 axllent/mailpit**
