@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react'
-import { ArrowLeft, KeyRound, LogOut, Mail, ShieldCheck, Trash2, Monitor } from 'lucide-react'
+import { ArrowLeft, KeyRound, LogOut, Mail, Trash2, Monitor } from 'lucide-react'
 import { Link, Navigate, useNavigate } from 'react-router-dom'
 import { useUser } from '../context/UserContext'
 import { getAccountSessions, revokeAccountSession, type AccountSession } from '../api/profile'
@@ -62,7 +62,7 @@ function AccountPage() {
 
   return <main className="profile-page account-page">
     <div className="account-back-row"><Link to="/profile"><ArrowLeft size={17} /> Wróć do profilu</Link></div>
-    <section className="profile-heading"><div><span className="eyebrow">KONTO I BEZPIECZEŃSTWO</span><h1>Ustawienia konta</h1><p>Zarządzaj adresem e-mail i hasłem swojego konta.</p></div></section>
+    <section className="profile-heading"><div><span className="eyebrow">USTAWIENIA KONTA</span><h1>Ustawienia konta</h1><p>Zarządzaj adresem e-mail, hasłem i sesjami swojego konta.</p></div></section>
     <div className="account-settings-layout">
       <section className="account-card account-settings-card">
         <div className="settings-section-title"><div className="settings-icon"><Mail size={20} /></div><div><h2>Adres e-mail</h2><p>Aktualny adres logowania: <strong>{user.email}</strong></p></div></div>
@@ -80,9 +80,13 @@ function AccountPage() {
           <button className="primary-button" type="submit" disabled={busy}>Zmień hasło</button>
         </form>
       </section>
-      <section className="account-card account-settings-card">
-        <div className="settings-section-title"><div className="settings-icon"><ShieldCheck size={20} /></div><div><h2>Bezpieczeństwo</h2><p>Sesja logowania jest przechowywana w ciasteczku HttpOnly.</p></div></div>
-        <p className="settings-description">Adres e-mail służy do logowania. Zmiany wymagają potwierdzenia nowego adresu.</p>
+      <section className="account-card account-settings-card account-danger-card">
+        <div className="settings-section-title"><div className="settings-icon danger-icon"><Trash2 size={20} /></div><div><h2>Usuń konto</h2><p>Usunięcie konta trwale usuwa profil i zapisane wyniki quizów.</p></div></div>
+        <form className="account-form" onSubmit={submitDelete}>
+          <label>Potwierdź adres e-mail<input type="email" value={deleteEmail} onChange={event => setDeleteEmail(event.target.value)} required autoComplete="email" /></label>
+          <label>Potwierdź hasło<input type="password" value={deletePassword} onChange={event => setDeletePassword(event.target.value)} required autoComplete="current-password" /></label>
+          <button className="danger-outline-button" type="submit" disabled={busy}><Trash2 size={16} /> Usuń konto i dane</button>
+        </form>
       </section>
       <section className="account-card account-settings-card sessions-card">
         <div className="settings-section-title"><div className="settings-icon"><Monitor size={20} /></div><div><h2>Aktywne sesje</h2><p>Sesje wygasają automatycznie po 12 godzinach.</p></div></div>
@@ -99,14 +103,6 @@ function AccountPage() {
             </button>
           </article>
         ))}</div> : <p className="settings-description">Nie znaleziono aktywnych sesji.</p>}
-      </section>
-      <section className="account-card account-settings-card account-danger-card">
-        <div className="settings-section-title"><div className="settings-icon danger-icon"><Trash2 size={20} /></div><div><h2>Usuń konto</h2><p>Usunięcie konta trwale usuwa profil i zapisane wyniki quizów.</p></div></div>
-        <form className="account-form" onSubmit={submitDelete}>
-          <label>Potwierdź adres e-mail<input type="email" value={deleteEmail} onChange={event => setDeleteEmail(event.target.value)} required autoComplete="email" /></label>
-          <label>Potwierdź hasło<input type="password" value={deletePassword} onChange={event => setDeletePassword(event.target.value)} required autoComplete="current-password" /></label>
-          <button className="danger-outline-button" type="submit" disabled={busy}><Trash2 size={16} /> Usuń konto i dane</button>
-        </form>
       </section>
     </div>
     {(error || message) && <p className={error ? 'form-error' : 'form-success'} role={error ? 'alert' : 'status'}>{error || message}</p>}

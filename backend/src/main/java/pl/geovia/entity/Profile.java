@@ -30,6 +30,9 @@ public class Profile {
     @Column(name = "city", length = 100)
     private String city;
 
+    @Column(name = "visibility", nullable = false, length = 16)
+    private String visibility = "private";
+
     @Convert(converter = GuestImportStatusConverter.class)
     @Column(name = "guest_import_status", nullable = false, length = 20)
     private GuestImportStatus guestImportStatus = GuestImportStatus.PENDING;
@@ -120,6 +123,9 @@ public class Profile {
     public void setCity(String city) {
         this.city = city;
     }
+
+    public String getVisibility() { return visibility; }
+    public void setVisibility(String visibility) { this.visibility = visibility; }
 
     public GuestImportStatus getGuestImportStatus() {
         return guestImportStatus;

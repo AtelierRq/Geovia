@@ -11,6 +11,7 @@ public record ProfileResponse(
         String avatarUrl,
         String bio,
         String city,
+        String visibility,
         GuestImportStatus guestImportStatus,
         OffsetDateTime createdAt,
         OffsetDateTime updatedAt

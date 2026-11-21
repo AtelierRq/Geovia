@@ -23,6 +23,8 @@ import java.util.HexFormat;
 import java.util.UUID;
 import java.util.List;
 import java.util.Locale;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 @Service
 @Transactional
@@ -34,6 +36,7 @@ public class AccountService {
     private final EmailVerificationTokenRepository verificationTokens;
     private final PasswordResetTokenRepository resetTokens;
     private final ProfileRepository profiles;
+    private final AvatarStorageService avatarStorage;
     private final JavaMailSender mailSender;
     private final SecureRandom random = new SecureRandom();
     @Value("${app.auth.base-url:http://localhost:5173}") private String baseUrl;
@@ -41,10 +44,10 @@ public class AccountService {
 
     public AccountService(AccountRepository accounts, AccountSessionRepository sessions,
                           EmailVerificationTokenRepository verificationTokens, PasswordResetTokenRepository resetTokens,
-                          ProfileRepository profiles,
+                          ProfileRepository profiles, AvatarStorageService avatarStorage,
                           JavaMailSender mailSender) {
         this.accounts=accounts; this.sessions=sessions; this.verificationTokens=verificationTokens;
-        this.resetTokens=resetTokens; this.profiles=profiles; this.mailSender=mailSender;
+        this.resetTokens=resetTokens; this.profiles=profiles; this.avatarStorage=avatarStorage; this.mailSender=mailSender;
     }
 
     public void register(RegisterRequest request) {
@@ -157,6 +160,9 @@ public class AccountService {
         Account account = requireAccount(accountId);
         if (!account.getEmail().equalsIgnoreCase(normalizeEmail(request.email())) || !verifyPassword(request.password(), account.getPasswordHash()))
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Podany e-mail lub hasło są nieprawidłowe");
+        profiles.findByAccount_Id(accountId).ifPresent(profile -> TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override public void afterCommit() { avatarStorage.deleteProfileFiles(profile.getId()); }
+        }));
         accounts.delete(account);
     }
 
@@ -173,7 +179,7 @@ public class AccountService {
     private AccountResponse toResponse(Account account) {
         Profile p = profiles.findByAccount_Id(account.getId()).orElseThrow();
         return new AccountResponse(account.getId(), account.getEmail(), account.getEmailVerifiedAt()!=null,
-                p.getId(), p.getUsername(), p.getAvatarUrl(), p.getBio(), p.getCity());
+                p.getId(), p.getUsername(), ProfileService.toAvatarUrl(p), p.getBio(), p.getCity(), p.getVisibility());
     }
     private void sendVerificationMessage(Account account, String targetEmail, String subject, String action) {
         verificationTokens.deleteAllByAccountId(account.getId());

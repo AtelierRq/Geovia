@@ -12,6 +12,7 @@ node_modules/
 dist/
 build/
 target/
+/backend/data/avatars/
 
 # Logs
 *.log

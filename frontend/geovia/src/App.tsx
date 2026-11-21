@@ -12,6 +12,7 @@ import AccountPage from './pages/AccountPage'
 import ProfileEditPage from './pages/ProfileEditPage'
 import AuthPage from './pages/AuthPage'
 import ResetPasswordPage from './pages/ResetPasswordPage'
+import PublicProfilePage from './pages/PublicProfilePage'
 import DailyChallengePage from './pages/DailyChallengePage'
 import { UserProvider } from './context/UserContext'
 import './App.css'
@@ -35,6 +36,7 @@ function App() {
           <Route path="/login" element={<AuthPage />} />
           <Route path="/verify-email" element={<AuthPage />} />
           <Route path="/reset-password" element={<ResetPasswordPage />} />
+          <Route path="/u/:username" element={<PublicProfilePage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
         <Footer />

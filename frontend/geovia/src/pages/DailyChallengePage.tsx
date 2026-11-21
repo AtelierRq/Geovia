@@ -73,6 +73,7 @@ function DailyChallengePage() {
         avatar: null,
         bio: '',
         city: '',
+        visibility: 'private',
       }
       const [challengeData, profile] = await Promise.all([
         getTodayChallenge(),

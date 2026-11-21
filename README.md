@@ -16,7 +16,7 @@ Uruchomienie:
 
 Rejestracja i zmiana adresu e-mail wysyłają link weryfikacyjny przez SMTP. Ustaw zmienne środowiskowe backendu `SMTP_HOST`, `SMTP_PORT`, `SMTP_USERNAME`, `SMTP_PASSWORD`, `SMTP_AUTH`, `SMTP_STARTTLS` oraz `MAIL_FROM`. Linki kierują na `APP_BASE_URL` (domyślnie `http://localhost:5173`). W produkcji ustaw też `AUTH_COOKIE_SECURE=true` i używaj HTTPS.
 
-Po uruchomieniu aplikacji migracje Flyway V3–V4 tworzą tabele kont, sesji oraz tokenów weryfikacyjnych i resetujących hasło. Starsze profile sprzed wprowadzenia kont pozostają w bazie bez przypisanego konta; usunięcie konta usuwa powiązany z nim profil i wyniki quizów.
+Po uruchomieniu aplikacji migracje Flyway V3–V5 tworzą tabele kont, sesji, tokenów resetujących hasło i ustawienie widoczności profilu. Starsze profile sprzed wprowadzenia kont pozostają w bazie bez przypisanego konta; usunięcie konta usuwa powiązany z nim profil i wyniki quizów. Nowe avatary są przechowywane lokalnie w `backend/data/avatars` (można zmienić ścieżkę zmienną `AVATAR_STORAGE_DIR`), a baza przechowuje jedynie nazwę pliku.
 
 
 Uruchamianie Mailpit w osobnym terminalu:

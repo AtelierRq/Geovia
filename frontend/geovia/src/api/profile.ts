@@ -8,6 +8,7 @@ export type BackendProfile = {
   avatarUrl: string | null
   bio: string | null
   city: string | null
+  visibility: 'private' | 'public'
   guestImportStatus: string
   createdAt: string
   updatedAt: string
@@ -48,10 +49,12 @@ export type BackendCountryKnowledgeItem = {
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  const headers = new Headers(init?.headers)
+  if (!(init?.body instanceof FormData) && !headers.has('Content-Type')) headers.set('Content-Type', 'application/json')
   const response = await fetch(`${API_BASE}${path}`, {
     ...init,
     credentials: 'include',
-    headers: { 'Content-Type': 'application/json', ...init?.headers },
+    headers,
   })
 
   if (!response.ok) {
@@ -69,12 +72,12 @@ export async function ensureBackendProfile(user: DemoUser): Promise<BackendProfi
   return getCurrentAccount().then((account) => account.profile)
 }
 
-export type AuthAccount = { id: string; email: string; emailVerified: boolean; profileId: string; username: string; avatarUrl: string | null; bio: string | null; city: string | null }
+export type AuthAccount = { id: string; email: string; emailVerified: boolean; profileId: string; username: string; avatarUrl: string | null; bio: string | null; city: string | null; visibility: 'private' | 'public' }
 export type AuthSession = AuthAccount & { profile: BackendProfile }
 
 export async function getCurrentAccount(): Promise<AuthSession> {
   const account = await request<AuthAccount>('/auth/me')
-  return { ...account, profile: { id: account.profileId, username: account.username, avatarUrl: account.avatarUrl, bio: account.bio, city: account.city, guestImportStatus: 'pending', createdAt: '', updatedAt: '' } }
+  return { ...account, profile: { id: account.profileId, username: account.username, avatarUrl: account.avatarUrl, bio: account.bio, city: account.city, visibility: account.visibility, guestImportStatus: 'pending', createdAt: '', updatedAt: '' } }
 }
 export function registerAccount(email: string, password: string, username: string) {
   return request<void>('/auth/register', { method: 'POST', body: JSON.stringify({ email, password, username }) })
@@ -100,11 +103,26 @@ export async function updateBackendProfile(profileId: string, user: DemoUser): P
     method: 'PUT',
     body: JSON.stringify({
       username: user.username,
-      avatarUrl: user.avatar,
       bio: user.bio,
       city: user.city,
+      visibility: user.visibility,
     }),
   })
+}
+
+export function uploadProfileAvatar(profileId: string, file: File) {
+  const body = new FormData()
+  body.append('file', file)
+  return request<BackendProfile>(`/profiles/${encodeURIComponent(profileId)}/avatar`, { method: 'PUT', body })
+}
+
+export function deleteProfileAvatar(profileId: string) {
+  return request<BackendProfile>(`/profiles/${encodeURIComponent(profileId)}/avatar`, { method: 'DELETE' })
+}
+
+export type PublicProfile = { username: string; avatarUrl: string | null; bio: string | null; city: string | null }
+export function getPublicProfile(username: string) {
+  return request<PublicProfile>(`/public/profiles/${encodeURIComponent(username)}`)
 }
 
 

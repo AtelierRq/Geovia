@@ -1,11 +1,11 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react'
 import {
-  changeAccountPassword, deleteAccount as deleteAccountRequest, getCurrentAccount, loginAccount, logoutAccount,
-  registerAccount, requestEmailChange, updateBackendProfile, type BackendProfile,
+  changeAccountPassword, deleteAccount as deleteAccountRequest, deleteProfileAvatar, getCurrentAccount, loginAccount, logoutAccount,
+  registerAccount, requestEmailChange, updateBackendProfile, uploadProfileAvatar, type BackendProfile,
 } from '../api/profile'
 
-export type DemoUser = { username: string; email: string; avatar: string | null; bio: string; city: string }
-type ProfileUpdates = Partial<Omit<DemoUser, 'email'>>
+export type DemoUser = { username: string; email: string; avatar: string | null; bio: string; city: string; visibility: 'private' | 'public' }
+type ProfileUpdates = Partial<Omit<DemoUser, 'email' | 'avatar'>>
 type UserContextValue = {
   user: DemoUser | null
   backendProfile: BackendProfile | null
@@ -15,6 +15,8 @@ type UserContextValue = {
   register: (email: string, password: string, username: string) => Promise<void>
   signOut: () => Promise<void>
   updateUser: (updates: ProfileUpdates) => Promise<void>
+  uploadAvatar: (file: File) => Promise<void>
+  removeAvatar: () => Promise<void>
   changeEmail: (email: string) => Promise<void>
   changePassword: (currentPassword: string, newPassword: string) => Promise<void>
   deleteAccount: (email: string, password: string) => Promise<void>
@@ -22,7 +24,7 @@ type UserContextValue = {
 }
 const UserContext = createContext<UserContextValue | null>(null)
 function toUser(account: Awaited<ReturnType<typeof getCurrentAccount>>): DemoUser {
-  return { username: account.profile.username, email: account.email, avatar: account.profile.avatarUrl, bio: account.profile.bio ?? '', city: account.profile.city ?? '' }
+  return { username: account.profile.username, email: account.email, avatar: account.profile.avatarUrl, bio: account.profile.bio ?? '', city: account.profile.city ?? '', visibility: account.profile.visibility }
 }
 
 export function UserProvider({ children }: { children: ReactNode }) {
@@ -61,11 +63,23 @@ export function UserProvider({ children }: { children: ReactNode }) {
     try {
       const profile = await updateBackendProfile(backendProfile.id, next)
       setBackendProfile(profile)
-      setUser({ ...next, username: profile.username, avatar: profile.avatarUrl, bio: profile.bio ?? '', city: profile.city ?? '' })
+      setUser({ ...next, username: profile.username, avatar: profile.avatarUrl, bio: profile.bio ?? '', city: profile.city ?? '', visibility: profile.visibility })
     } catch (error) {
       setProfileError(error instanceof Error ? error.message : 'Nie udało się zapisać profilu.')
       throw error
     }
+  }
+  async function uploadAvatar(file: File) {
+    if (!backendProfile) return
+    const profile = await uploadProfileAvatar(backendProfile.id, file)
+    setBackendProfile(profile)
+    setUser(current => current ? { ...current, avatar: profile.avatarUrl } : current)
+  }
+  async function removeAvatar() {
+    if (!backendProfile) return
+    const profile = await deleteProfileAvatar(backendProfile.id)
+    setBackendProfile(profile)
+    setUser(current => current ? { ...current, avatar: null } : current)
   }
   async function changeEmail(email: string) { await requestEmailChange(email) }
   async function changePassword(currentPassword: string, newPassword: string) { await changeAccountPassword(currentPassword, newPassword) }
@@ -74,7 +88,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
     setUser(null); setBackendProfile(null); setProfileError(null)
   }
 
-  return <UserContext.Provider value={{ user, backendProfile, profileLoading, profileError, login, register, signOut, updateUser, changeEmail, changePassword, deleteAccount, refreshBackendProfile }}>{children}</UserContext.Provider>
+  return <UserContext.Provider value={{ user, backendProfile, profileLoading, profileError, login, register, signOut, updateUser, uploadAvatar, removeAvatar, changeEmail, changePassword, deleteAccount, refreshBackendProfile }}>{children}</UserContext.Provider>
 }
 
 export function useUser() {

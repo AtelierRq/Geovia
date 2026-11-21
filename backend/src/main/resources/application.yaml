@@ -25,9 +25,16 @@ spring:
       mail.smtp.auth: ${SMTP_AUTH:false}
       mail.smtp.starttls.enable: ${SMTP_STARTTLS:false}
 
+  servlet:
+    multipart:
+      max-file-size: 2MB
+      max-request-size: 3MB
+
 app:
   auth:
     base-url: ${APP_BASE_URL:http://localhost:5173}
     cookie-secure: ${AUTH_COOKIE_SECURE:false}
   mail:
     from: ${MAIL_FROM:no-reply@geovia.local}
+  storage:
+    avatar-directory: ${AVATAR_STORAGE_DIR:./data/avatars}

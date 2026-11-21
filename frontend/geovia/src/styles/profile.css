@@ -512,6 +512,37 @@
   outline: none;
 }
 
+.account-form select {
+  width: 100%;
+  min-height: 45px;
+  padding: 10px 13px;
+  color: var(--text);
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  font: inherit;
+  font-weight: 400;
+}
+
+.account-form select:focus { outline: 2px solid var(--green-light); border-color: var(--green); }
+
+.profile-preview-link {
+  width: fit-content;
+  color: var(--green-dark);
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.profile-preview-link:hover { text-decoration: underline; }
+
+.public-profile-page { max-width: 900px; }
+.public-profile-card { max-width: 780px; margin-top: 20px; }
+.public-profile-avatar { width: 96px; height: 96px; }
+.public-profile-city { display: flex; align-items: center; gap: 6px; }
+.public-profile-empty { max-width: 520px; margin: 35px auto; }
+.public-profile-empty h2 { margin: 12px 0 6px; }
+.public-profile-empty .primary-button { margin-top: 12px; }
+
 .account-form input:focus {
   border-color: var(--green);
   box-shadow: 0 0 0 3px rgb(47 107 86 / 12%);

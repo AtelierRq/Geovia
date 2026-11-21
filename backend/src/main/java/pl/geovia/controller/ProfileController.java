@@ -12,6 +12,10 @@ import java.util.UUID;
 import pl.geovia.repository.ProfileRepository;
 import pl.geovia.entity.Profile;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.http.MediaType;
+import org.springframework.http.CacheControl;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/api/profiles")
@@ -40,6 +44,27 @@ public class ProfileController {
     ) {
         requireOwner(id, accountId);
         return profileService.updateProfile(id, request);
+    }
+
+    @PutMapping(path = "/{id}/avatar", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ProfileResponse uploadAvatar(@PathVariable UUID id, @RequestAttribute("accountId") UUID accountId,
+                                        @RequestPart("file") MultipartFile file) {
+        requireOwner(id, accountId);
+        return profileService.uploadAvatar(id, file);
+    }
+
+    @DeleteMapping("/{id}/avatar")
+    public ProfileResponse deleteAvatar(@PathVariable UUID id, @RequestAttribute("accountId") UUID accountId) {
+        requireOwner(id, accountId);
+        return profileService.deleteAvatar(id);
+    }
+
+    @GetMapping("/{id}/avatar")
+    public ResponseEntity<byte[]> getAvatar(@PathVariable UUID id, @RequestAttribute("accountId") UUID accountId) {
+        requireOwner(id, accountId);
+        var avatar = profileService.getAvatar(id);
+        return ResponseEntity.ok().contentType(MediaType.parseMediaType(avatar.contentType()))
+                .cacheControl(CacheControl.noCache()).body(avatar.bytes());
     }
 
     @GetMapping("/{id}/attempts")

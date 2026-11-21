@@ -12,22 +12,26 @@ import { useUser } from "../context/UserContext";
 import "../styles/profile.css";
 
 function ProfileEditPage() {
-  const { user, updateUser } = useUser();
+  const { user, updateUser, uploadAvatar, removeAvatar } = useUser();
   const navigate = useNavigate();
   const fileInput = useRef<HTMLInputElement>(null);
   const [username, setUsername] = useState(user?.username ?? "");
   const [bio, setBio] = useState(user?.bio ?? "");
   const [city, setCity] = useState(user?.city ?? "");
+  const [visibility, setVisibility] = useState<'private' | 'public'>(user?.visibility ?? 'private');
   const [saved, setSaved] = useState(false);
+  const [avatarBusy, setAvatarBusy] = useState(false);
+  const [avatarError, setAvatarError] = useState('');
+  const [saveError, setSaveError] = useState('');
 
   if (!user) return <Navigate to="/login" replace />;
 
-  function onAvatarChange(event: ChangeEvent<HTMLInputElement>) {
+  async function onAvatarChange(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    if (!file.type.startsWith("image/")) {
-      window.alert("Wybierz plik obrazu.");
+    if (!['image/png', 'image/jpeg', 'image/gif'].includes(file.type)) {
+      window.alert("Wybierz obraz PNG, JPEG lub GIF.");
       event.target.value = "";
       return;
     }
@@ -37,28 +41,29 @@ function ProfileEditPage() {
       return;
     }
 
-    const reader = new FileReader();
-    reader.onload = () => {
-      updateUser({ avatar: String(reader.result) });
-      setSaved(false);
-    };
-    reader.readAsDataURL(file);
-    event.target.value = "";
+    setAvatarBusy(true); setAvatarError('');
+    try { await uploadAvatar(file); setSaved(false); }
+    catch (error) { setAvatarError(error instanceof Error ? error.message : 'Nie udało się zapisać zdjęcia.'); }
+    finally { setAvatarBusy(false); event.target.value = ""; }
   }
 
-  function removeAvatar() {
-    updateUser({ avatar: null });
-    setSaved(false);
+  async function removeCurrentAvatar() {
+    setAvatarBusy(true); setAvatarError('');
+    try { await removeAvatar(); setSaved(false); }
+    catch (error) { setAvatarError(error instanceof Error ? error.message : 'Nie udało się usunąć zdjęcia.'); }
+    finally { setAvatarBusy(false); }
   }
 
   async function save(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    setSaveError('');
     try {
-      await updateUser({ username: username.trim(), bio: bio.trim(), city: city.trim() });
+      await updateUser({ username: username.trim(), bio: bio.trim(), city: city.trim(), visibility });
       setSaved(true);
       navigate("/profile");
-    } catch {
+    } catch (error) {
       setSaved(false);
+      setSaveError(error instanceof Error ? error.message : 'Nie udało się zapisać profilu.');
     }
   }
 
@@ -95,6 +100,7 @@ function ProfileEditPage() {
                 type="button"
                 className="secondary-button"
                 onClick={() => fileInput.current?.click()}
+                disabled={avatarBusy}
               >
                 <Camera size={16} /> {user.avatar ? "Zmień zdjęcie" : "Dodaj zdjęcie"}
               </button>
@@ -102,7 +108,8 @@ function ProfileEditPage() {
                 <button
                   type="button"
                   className="text-danger-button"
-                  onClick={removeAvatar}
+                  onClick={() => void removeCurrentAvatar()}
+                  disabled={avatarBusy}
                 >
                   <ImageOff size={15} /> Usuń zdjęcie
                 </button>
@@ -112,8 +119,9 @@ function ProfileEditPage() {
               ref={fileInput}
               className="visually-hidden"
               type="file"
-              accept="image/*"
+              accept="image/png,image/jpeg,image/gif"
               onChange={onAvatarChange}
+              disabled={avatarBusy}
             />
           </div>
         </div>
@@ -162,10 +170,24 @@ function ProfileEditPage() {
             />
           </label>
 
+          <label>
+            Widoczność profilu
+            <select value={visibility} onChange={event => { setVisibility(event.target.value as 'private' | 'public'); setSaved(false); }}>
+              <option value="private">Prywatny</option>
+              <option value="public">Publiczny</option>
+            </select>
+            <span className="field-help">{visibility === 'public' ? 'Profil będzie widoczny pod publicznym linkiem i pokaże nazwę, avatar, opis oraz miasto.' : 'Profil jest dostępny tylko po zalogowaniu na to konto.'}</span>
+            {visibility === 'public' && visibility === user.visibility && username.trim() === user.username
+              ? <Link className="profile-preview-link" to={`/u/${encodeURIComponent(user.username)}`} target="_blank" rel="noreferrer">Otwórz publiczny podgląd profilu</Link>
+              : visibility === 'public' && <span className="field-help">Zapisz profil, aby włączyć publiczny podgląd.</span>}
+          </label>
+
           <div className="account-info-note">
             <strong>Twój profil</strong>
-            <p>Zmiany są zapisywane na koncie i będą dostępne po zalogowaniu w innej przeglądarce.</p>
+            <p>Zmiany profilu są zapisywane na koncie. Zdjęcie jest przesyłane jako osobny plik i nie jest kodowane w bazie danych.</p>
           </div>
+          {avatarError && <p className="form-error" role="alert">{avatarError}</p>}
+          {saveError && <p className="form-error" role="alert">{saveError}</p>}
 
           <div className="account-form-actions">
             <button className="primary-button" type="submit">
