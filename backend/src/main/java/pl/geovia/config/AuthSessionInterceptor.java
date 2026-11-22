@@ -13,7 +13,7 @@ public class AuthSessionInterceptor implements HandlerInterceptor, WebMvcConfigu
     private final AccountService accounts;
     public AuthSessionInterceptor(AccountService accounts) { this.accounts=accounts; }
     @Override public void addInterceptors(InterceptorRegistry registry) {
-        registry.addInterceptor(this).addPathPatterns("/api/profiles/**", "/api/attempts/**", "/api/daily-challenges/**", "/api/auth/me", "/api/auth/email", "/api/auth/password", "/api/auth/sessions", "/api/auth/sessions/**", "/api/auth/account")
+        registry.addInterceptor(this).addPathPatterns("/api/profiles/**", "/api/attempts/**", "/api/daily-challenges/**", "/api/friends/**", "/api/auth/me", "/api/auth/email", "/api/auth/password", "/api/auth/sessions", "/api/auth/sessions/**", "/api/auth/account")
                 .excludePathPatterns("/api/daily-challenges/today");
     }
     @Override public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {

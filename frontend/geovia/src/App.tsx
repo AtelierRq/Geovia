@@ -14,6 +14,7 @@ import AuthPage from './pages/AuthPage'
 import ResetPasswordPage from './pages/ResetPasswordPage'
 import PublicProfilePage from './pages/PublicProfilePage'
 import DailyChallengePage from './pages/DailyChallengePage'
+import FriendsPage from './pages/FriendsPage'
 import { UserProvider } from './context/UserContext'
 import './App.css'
 
@@ -33,6 +34,7 @@ function App() {
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/profile/edit" element={<ProfileEditPage />} />
           <Route path="/profile/account" element={<AccountPage />} />
+          <Route path="/profile/friends" element={<FriendsPage />} />
           <Route path="/login" element={<AuthPage />} />
           <Route path="/verify-email" element={<AuthPage />} />
           <Route path="/reset-password" element={<ResetPasswordPage />} />

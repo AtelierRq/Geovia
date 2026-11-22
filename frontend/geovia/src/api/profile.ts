@@ -124,6 +124,18 @@ export function getPublicProfile(username: string) {
   return request<PublicProfile>(`/public/profiles/${encodeURIComponent(username)}`)
 }
 
+export type FriendProfile = { profileId: string; username: string; avatarUrl: string | null; visibility: 'private' | 'public'; bio: string | null; city: string | null; requestedAt: string }
+export type FriendRequestEntry = { requestId: string; profile: FriendProfile }
+export type FriendOverview = { friends: FriendProfile[]; incomingRequests: FriendRequestEntry[]; outgoingRequests: FriendRequestEntry[] }
+export type FriendSearchResult = Pick<FriendProfile, 'profileId' | 'username' | 'avatarUrl' | 'visibility'> & { relationState: 'none' | 'outgoing-pending' | 'incoming-pending' | 'accepted' }
+export function getFriends() { return request<FriendOverview>('/friends') }
+export function searchFriends(query: string) { return request<FriendSearchResult[]>(`/friends/search?q=${encodeURIComponent(query)}`) }
+export function sendFriendRequest(username: string) { return request<void>('/friends/requests', { method: 'POST', body: JSON.stringify({ username }) }) }
+export function acceptFriendRequest(requestId: string) { return request<void>(`/friends/requests/${encodeURIComponent(requestId)}/accept`, { method: 'POST' }) }
+export function declineFriendRequest(requestId: string) { return request<void>(`/friends/requests/${encodeURIComponent(requestId)}`, { method: 'DELETE' }) }
+export function cancelFriendRequest(requestId: string) { return request<void>(`/friends/requests/${encodeURIComponent(requestId)}/outgoing`, { method: 'DELETE' }) }
+export function removeFriend(profileId: string) { return request<void>(`/friends/${encodeURIComponent(profileId)}`, { method: 'DELETE' }) }
+
 
 export type CreateBackendQuizAttempt = {
   categoryId: string

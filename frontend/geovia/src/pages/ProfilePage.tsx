@@ -594,20 +594,20 @@ function ProfilePage() {
             <span className="eyebrow">SPOŁECZNOŚĆ</span>
             <h2>Znajomi</h2>
           </div>
-          <span className="profile-section-caption">W przygotowaniu</span>
+          <Link className="profile-section-caption friends-manage-link" to="/profile/friends">Zarządzaj znajomymi <ArrowRight size={14} /></Link>
         </div>
-        <div className="profile-feature-card friends-feature">
+        <Link className="profile-feature-card friends-feature friends-feature-link" to="/profile/friends">
           <div className="feature-icon">
             <Users size={25} />
           </div>
           <div className="profile-feature-copy">
             <h3>Ucz się razem ze znajomymi</h3>
             <p>
-              Lista znajomych i wspólne porównywanie postępów pojawią się w
-              późniejszym etapie rozwoju Geovii.
+              Wysyłaj zaproszenia, akceptuj nowe znajomości i odwiedzaj publiczne profile.
             </p>
           </div>
-        </div>
+          <span className="friends-card-action">Otwórz listę <ArrowRight size={16} /></span>
+        </Link>
       </section>
       </div>
     </main>
