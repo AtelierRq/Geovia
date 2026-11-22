@@ -182,7 +182,6 @@ public class ProfileService {
                 profile.getBio(),
                 profile.getCity(),
                 profile.getVisibility(),
-                profile.getGuestImportStatus(),
                 profile.getCreatedAt(),
                 profile.getUpdatedAt()
         );

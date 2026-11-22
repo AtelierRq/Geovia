@@ -1,6 +1,5 @@
 package pl.geovia.entity;
 
-import pl.geovia.entity.enums.GuestImportStatus;
 import jakarta.persistence.*;
 
 import java.time.OffsetDateTime;
@@ -32,13 +31,6 @@ public class Profile {
 
     @Column(name = "visibility", nullable = false, length = 16)
     private String visibility = "private";
-
-    @Convert(converter = GuestImportStatusConverter.class)
-    @Column(name = "guest_import_status", nullable = false, length = 20)
-    private GuestImportStatus guestImportStatus = GuestImportStatus.PENDING;
-
-    @Column(name = "guest_import_decided_at")
-    private OffsetDateTime guestImportDecidedAt;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private OffsetDateTime createdAt;
@@ -126,22 +118,6 @@ public class Profile {
 
     public String getVisibility() { return visibility; }
     public void setVisibility(String visibility) { this.visibility = visibility; }
-
-    public GuestImportStatus getGuestImportStatus() {
-        return guestImportStatus;
-    }
-
-    public void setGuestImportStatus(GuestImportStatus guestImportStatus) {
-        this.guestImportStatus = guestImportStatus;
-    }
-
-    public OffsetDateTime getGuestImportDecidedAt() {
-        return guestImportDecidedAt;
-    }
-
-    public void setGuestImportDecidedAt(OffsetDateTime guestImportDecidedAt) {
-        this.guestImportDecidedAt = guestImportDecidedAt;
-    }
 
     public OffsetDateTime getCreatedAt() {
         return createdAt;

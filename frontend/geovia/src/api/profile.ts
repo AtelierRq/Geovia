@@ -9,7 +9,6 @@ export type BackendProfile = {
   bio: string | null
   city: string | null
   visibility: 'private' | 'public'
-  guestImportStatus: string
   createdAt: string
   updatedAt: string
 }
@@ -77,7 +76,7 @@ export type AuthSession = AuthAccount & { profile: BackendProfile }
 
 export async function getCurrentAccount(): Promise<AuthSession> {
   const account = await request<AuthAccount>('/auth/me')
-  return { ...account, profile: { id: account.profileId, username: account.username, avatarUrl: account.avatarUrl, bio: account.bio, city: account.city, visibility: account.visibility, guestImportStatus: 'pending', createdAt: '', updatedAt: '' } }
+  return { ...account, profile: { id: account.profileId, username: account.username, avatarUrl: account.avatarUrl, bio: account.bio, city: account.city, visibility: account.visibility, createdAt: '', updatedAt: '' } }
 }
 export function registerAccount(email: string, password: string, username: string) {
   return request<void>('/auth/register', { method: 'POST', body: JSON.stringify({ email, password, username }) })
