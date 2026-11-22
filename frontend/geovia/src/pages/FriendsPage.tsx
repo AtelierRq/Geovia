@@ -103,7 +103,7 @@ function FriendsPage() {
         {overview.friends.length ? <div className="friends-list">{overview.friends.map(friend => <article className="friend-row" key={friend.profileId}>
           <FriendAvatar username={friend.username} avatarUrl={friend.avatarUrl} />
           <div className="friend-row-copy"><strong>{friend.username}</strong><span>{friend.visibility === 'public' ? [friend.city, friend.bio].filter(Boolean).join(' · ') || 'Profil publiczny' : 'Profil prywatny'}</span></div>
-          <div className="friend-row-actions">{friend.visibility === 'public' ? <Link className="secondary-button friend-action" to={`/u/${encodeURIComponent(friend.username)}`}>Odwiedź profil</Link> : <span className="friend-state">Profil prywatny</span>}<button className="friend-text-action danger" disabled={busy} onClick={() => void run(() => removeFriend(friend.profileId))}><UserMinus size={16} /> Usuń</button></div>
+          <div className="friend-row-actions">{friend.visibility === 'public' ? <Link className="secondary-button friend-action" to={`/u/${encodeURIComponent(friend.username)}`} state={{ from: '/profile/friends' }}>Odwiedź profil</Link> : <span className="friend-state">Profil prywatny</span>}<button className="friend-text-action danger" disabled={busy} onClick={() => void run(() => removeFriend(friend.profileId))}><UserMinus size={16} /> Usuń</button></div>
         </article>)}</div> : <div className="profile-empty-state friends-empty"><Users size={27} /><h3>Nie masz jeszcze znajomych</h3><p>Wyszukaj użytkownika po nazwie i wyślij zaproszenie.</p></div>}
       </section>
 

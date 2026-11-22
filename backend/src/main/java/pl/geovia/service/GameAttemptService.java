@@ -136,6 +136,25 @@ public class GameAttemptService {
     }
 
     @Transactional(readOnly = true)
+    public PublicProfileActivityResponse getPublicActivity(UUID profileId) {
+        requireProfile(profileId);
+        List<GameAttempt> attempts = attemptRepository
+                .findAllByUser_IdAndAttemptTypeOrderByCreatedAtDesc(profileId, AttemptType.QUIZ);
+        OffsetDateTime since = OffsetDateTime.now().minusDays(30);
+        long recent = attempts.stream().filter(a -> !a.getFinishedAt().isBefore(since)).count();
+        long correct = attempts.stream().mapToLong(GameAttempt::getCorrectCount).sum();
+        BigDecimal average = attempts.isEmpty()
+                ? BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP)
+                : attempts.stream().map(GameAttempt::getScorePercent)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add)
+                    .divide(BigDecimal.valueOf(attempts.size()), 2, RoundingMode.HALF_UP);
+        GameAttempt last = attempts.isEmpty() ? null : attempts.getFirst();
+        return new PublicProfileActivityResponse(attempts.size(), recent, correct, average,
+                last == null ? null : last.getFinishedAt(), last == null ? null : last.getCategoryId(),
+                last == null ? null : last.getScorePercent());
+    }
+
+    @Transactional(readOnly = true)
     public CountryKnowledgeResponse getCountryKnowledge(UUID profileId) {
         requireProfile(profileId);
         List<GameAttempt> attempts = attemptRepository

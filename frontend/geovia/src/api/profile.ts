@@ -123,6 +123,18 @@ export type PublicProfile = { username: string; avatarUrl: string | null; bio: s
 export function getPublicProfile(username: string) {
   return request<PublicProfile>(`/public/profiles/${encodeURIComponent(username)}`)
 }
+export type PublicProfileActivity = {
+  totalAttempts: number
+  attemptsLast30Days: number
+  totalCorrectAnswers: number
+  averageScorePercent: number
+  lastAttemptAt: string | null
+  lastCategoryId: string | null
+  lastScorePercent: number | null
+}
+export function getPublicProfileActivity(username: string) {
+  return request<PublicProfileActivity>(`/public/profiles/${encodeURIComponent(username)}/activity`)
+}
 
 export type FriendProfile = { profileId: string; username: string; avatarUrl: string | null; visibility: 'private' | 'public'; bio: string | null; city: string | null; requestedAt: string }
 export type FriendRequestEntry = { requestId: string; profile: FriendProfile }

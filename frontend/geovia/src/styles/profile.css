@@ -542,6 +542,11 @@
 .public-profile-empty { max-width: 520px; margin: 35px auto; }
 .public-profile-empty h2 { margin: 12px 0 6px; }
 .public-profile-empty .primary-button { margin-top: 12px; }
+.public-activity-section { max-width: 780px; margin: 32px 0 0; }
+.public-activity-section .profile-section-heading { margin-bottom: 8px; }
+.public-activity-section .profile-section-heading h2 { margin-top: 7px; }
+.public-activity-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 16px; }
+.public-last-activity { min-height: 68px; }
 
 .account-form input:focus {
   border-color: var(--green);
@@ -1646,6 +1651,7 @@
   .friend-row-actions { width: 100%; justify-content: flex-start; padding-left: 60px; }
   .friends-manage-link { white-space: normal; }
   .friends-card-action { align-self: center; }
+  .public-activity-grid { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 900px) {
