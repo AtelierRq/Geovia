@@ -6,7 +6,8 @@ import geoviaWorldCountries from '../data/map/geoviaWorldCountries.json'
 import geoviaWorldBorders from '../data/map/geoviaWorldBorders.json'
 import { categories } from '../data/categories'
 import { useUser } from '../context/UserContext'
-import { ensureBackendProfile, createBackendQuizAttempt } from '../api/profile'
+import { useQuizAttemptPersistence } from '../hooks/useQuizAttemptPersistence'
+import QuizSaveStatusNotice from '../components/QuizSaveStatus'
 import { areas } from '../data/areas'
 import { getCountriesByContinent, countries, normalizeCountryName } from '../data/countries'
 import '../styles/quiz-common.css'
@@ -25,8 +26,6 @@ type SavedQuizResult = {
   status: 'completed' | 'ended-early'
   foundCountries: string[]
 }
-
-const RESULTS_KEY = 'geovia.quizResults'
 
 // Dodatkowe geometrie, które w quizie zaliczamy razem z państwem nadrzędnym.
 const MAP_ID_ALIASES: Record<string, string> = {
@@ -64,8 +63,8 @@ function TypeCountryToMapPage() {
   const [startedAt, setStartedAt] = useState<number | null>(null)
   const [now, setNow] = useState(Date.now())
   const [endedResult, setEndedResult] = useState<SavedQuizResult | null>(null)
-  const backendSaveStartedRef = useRef(false)
   const { user } = useUser()
+  const { status: saveStatus, errorMessage: saveError, saveAttempt, retry } = useQuizAttemptPersistence()
   const [mapZoom, setMapZoom] = useState(1)
   const mapZoomRef = useRef(1)
   const pendingZoomRef = useRef(1)
@@ -99,7 +98,7 @@ function TypeCountryToMapPage() {
   function saveResult(status: SavedQuizResult['status']) {
     if (endedResult) return
     const result: SavedQuizResult = {
-      id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      id: crypto.randomUUID(),
       categoryId: categoryId ?? 'countries',
       areaId: areaId ?? 'europe',
       modeId: modeId ?? 'type-to-map',
@@ -111,34 +110,24 @@ function TypeCountryToMapPage() {
       status,
       foundCountries: foundIds,
     }
-    try {
-      const previous = JSON.parse(localStorage.getItem(RESULTS_KEY) ?? '[]') as SavedQuizResult[]
-      localStorage.setItem(RESULTS_KEY, JSON.stringify([...previous, result]))
-    } catch {
-      // Quiz result remains visible for this session even if local storage is unavailable.
-    }
     setEndedResult(result)
-    if (!backendSaveStartedRef.current && user) {
-      backendSaveStartedRef.current = true
-      const countryResults = quizCountries.map((country) => ({
-        countryId: country.id,
-        outcome: foundIds.includes(country.id) ? 'correct' as const : 'incorrect' as const,
-      }))
-      void ensureBackendProfile(user)
-        .then((profile) => createBackendQuizAttempt(profile.id, {
-          categoryId,
-          areaId,
-          modeId,
-          correctCount: result.completed,
-          totalQuestions: result.total,
-          durationMs: result.elapsedSeconds * 1000,
-          startedAt: new Date(startedAt ?? Date.now()).toISOString(),
-          finishedAt: result.endedAt,
-          status: result.status,
-          countryResults,
-        }))
-        .catch((error: unknown) => console.error('Nie udało się zapisać wyniku quizu w backendzie:', error))
-    }
+    const countryResults = quizCountries.map((country) => ({
+      countryId: country.id,
+      outcome: result.foundCountries.includes(country.id) ? 'correct' as const : 'incorrect' as const,
+    }))
+    saveAttempt(result, user, {
+      clientAttemptId: result.id,
+      categoryId,
+      areaId,
+      modeId,
+      correctCount: result.completed,
+      totalQuestions: result.total,
+      durationMs: result.elapsedSeconds * 1000,
+      startedAt: new Date(startedAt ?? Date.parse(result.endedAt) - result.elapsedSeconds * 1000).toISOString(),
+      finishedAt: result.endedAt,
+      status: result.status,
+      countryResults,
+    })
   }
 
   useEffect(() => {
@@ -196,7 +185,8 @@ function TypeCountryToMapPage() {
           <div className="quiz-result-score">{endedResult.completed}/{endedResult.total}</div>
           <p>Odnalezione państwa: <strong>{endedResult.percentage}%</strong></p>
           <p>Czas: <strong>{formatTime(endedResult.elapsedSeconds)}</strong></p>
-          <p className="quiz-result-note">Wynik został zapisany w tej przeglądarce. Po zakończeniu nie można kontynuować tej próby.</p>
+          <QuizSaveStatusNotice status={saveStatus} errorMessage={saveError} onRetry={retry} />
+          <p className="quiz-result-note">Po zakończeniu nie można kontynuować tej próby.</p>
           <div className="quiz-result-actions">
             <button type="button" className="primary-button" onClick={() => window.location.assign(`/quiz/${category.id}/${area.id}/type-to-map`)}>Rozpocznij nowy quiz</button>
             <Link to={`/categories/${category.id}/areas/${area.id}/modes`} className="secondary-button">Wróć do trybów</Link>

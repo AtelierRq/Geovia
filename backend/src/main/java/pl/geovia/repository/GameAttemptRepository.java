@@ -24,6 +24,8 @@ public interface GameAttemptRepository
 
     List<GameAttempt> findAllByUser_IdAndAttemptTypeOrderByCreatedAtAsc(UUID userId, AttemptType attemptType);
 
+    java.util.Optional<GameAttempt> findByUser_IdAndClientAttemptId(UUID userId, UUID clientAttemptId);
+
     List<GameAttempt> findAllByUser_IdAndAttemptTypeAndChallenge_IdOrderByCreatedAtDesc(
             UUID userId, AttemptType attemptType, UUID challengeId
     );

@@ -36,6 +36,9 @@ public class GameAttempt {
     @Column(name = "mode_id", nullable = false, length = 64)
     private String modeId;
 
+    @Column(name = "client_attempt_id")
+    private UUID clientAttemptId;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "challenge_id")
     private DailyChallenge challenge;
@@ -118,6 +121,9 @@ public class GameAttempt {
     public void setModeId(String modeId) {
         this.modeId = modeId;
     }
+
+    public UUID getClientAttemptId() { return clientAttemptId; }
+    public void setClientAttemptId(UUID clientAttemptId) { this.clientAttemptId = clientAttemptId; }
 
     public DailyChallenge getChallenge() {
         return challenge;

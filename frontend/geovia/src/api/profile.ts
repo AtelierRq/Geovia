@@ -150,6 +150,7 @@ export function removeFriend(profileId: string) { return request<void>(`/friends
 
 
 export type CreateBackendQuizAttempt = {
+  clientAttemptId: string
   categoryId: string
   areaId: string
   modeId: string

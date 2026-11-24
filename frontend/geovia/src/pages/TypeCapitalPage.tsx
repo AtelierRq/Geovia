@@ -1,9 +1,10 @@
-import { useEffect, useRef, useState, type FormEvent } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import { ArrowLeft, CheckCircle2, Clock3, Flag, Trophy, XCircle } from 'lucide-react'
 import { Link, useParams } from 'react-router-dom'
 import { categories } from '../data/categories'
 import { useUser } from '../context/UserContext'
-import { ensureBackendProfile, createBackendQuizAttempt } from '../api/profile'
+import { useQuizAttemptPersistence } from '../hooks/useQuizAttemptPersistence'
+import QuizSaveStatusNotice from '../components/QuizSaveStatus'
 import { areas } from '../data/areas'
 import { capitals } from '../data/capitals'
 import { countries, normalizeCountryName } from '../data/countries'
@@ -24,7 +25,6 @@ type Result = {
   foundCountries: string[]
 }
 
-const RESULTS_KEY = 'geovia.quizResults'
 const baseQuizItems = capitals
   .map((capital) => {
     const country = countries.find((item) => item.id === capital.countryId)
@@ -58,8 +58,8 @@ function TypeCapitalPage() {
   const [startedAt, setStartedAt] = useState<number | null>(null)
   const [now, setNow] = useState(Date.now())
   const [endedResult, setEndedResult] = useState<Result | null>(null)
-  const backendSaveStartedRef = useRef(false)
   const { user } = useUser()
+  const { status: saveStatus, errorMessage: saveError, saveAttempt, retry } = useQuizAttemptPersistence()
   const current = remainingItems[0]
   const elapsedSeconds = startedAt === null ? 0 : Math.floor((now - startedAt) / 1000)
   const isEnded = endedResult !== null
@@ -70,49 +70,35 @@ function TypeCapitalPage() {
     return () => window.clearInterval(timer)
   }, [startedAt, isEnded])
 
-  function saveResult(status: Result['status']) {
-    if (endedResult) return
-    const result: Result = {
-      id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+  function persistResult(result: Result) {
+    setEndedResult(result)
+    const countryResults = baseQuizItems.map((item) => ({
+      countryId: item.countryId,
+      outcome: result.foundCountries.includes(item.countryId) ? 'correct' as const : 'incorrect' as const,
+    }))
+    saveAttempt(result, user, {
+      clientAttemptId: result.id,
       categoryId,
       areaId,
       modeId,
-      completed: foundIds.length,
-      total: baseQuizItems.length,
+      correctCount: result.completed,
+      totalQuestions: result.total,
+      durationMs: result.elapsedSeconds * 1000,
+      startedAt: new Date(startedAt ?? Date.parse(result.endedAt) - result.elapsedSeconds * 1000).toISOString(),
+      finishedAt: result.endedAt,
+      status: result.status,
+      countryResults,
+    })
+  }
+
+  function saveResult(status: Result['status']) {
+    if (endedResult) return
+    persistResult({
+      id: crypto.randomUUID(), categoryId, areaId, modeId,
+      completed: foundIds.length, total: baseQuizItems.length,
       percentage: Math.round((foundIds.length / baseQuizItems.length) * 100),
-      elapsedSeconds,
-      endedAt: new Date().toISOString(),
-      status,
-      foundCountries: foundIds,
-    }
-    try {
-      const previous = JSON.parse(localStorage.getItem(RESULTS_KEY) ?? '[]') as Result[]
-      localStorage.setItem(RESULTS_KEY, JSON.stringify([...previous, result]))
-    } catch {
-      // Keep the result visible even when browser storage is unavailable.
-    }
-    setEndedResult(result)
-    if (!backendSaveStartedRef.current && user) {
-      backendSaveStartedRef.current = true
-      const countryResults = baseQuizItems.map((item) => ({
-        countryId: item.countryId,
-        outcome: foundIds.includes(item.countryId) ? 'correct' as const : 'incorrect' as const,
-      }))
-      void ensureBackendProfile(user)
-        .then((profile) => createBackendQuizAttempt(profile.id, {
-          categoryId,
-          areaId,
-          modeId,
-          correctCount: result.completed,
-          totalQuestions: result.total,
-          durationMs: result.elapsedSeconds * 1000,
-          startedAt: new Date(startedAt ?? Date.now()).toISOString(),
-          finishedAt: result.endedAt,
-          status: result.status,
-          countryResults,
-        }))
-        .catch((error: unknown) => console.error('Nie udało się zapisać wyniku quizu w backendzie:', error))
-    }
+      elapsedSeconds, endedAt: new Date().toISOString(), status, foundCountries: foundIds,
+    })
   }
 
   function skipCurrent() {
@@ -137,20 +123,14 @@ function TypeCapitalPage() {
       if (remainingItems.length === 1) {
         // Let React apply the final answer before saving the completed result.
         const completedResult: Result = {
-          id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+          id: crypto.randomUUID(),
           categoryId, areaId, modeId,
           completed: baseQuizItems.length, total: baseQuizItems.length, percentage: 100,
           elapsedSeconds: startedAt === null ? 0 : Math.floor((Date.now() - startedAt) / 1000),
           endedAt: new Date().toISOString(), status: 'completed',
           foundCountries: [...foundIds, current.countryId],
         }
-        try {
-          const previous = JSON.parse(localStorage.getItem(RESULTS_KEY) ?? '[]') as Result[]
-          localStorage.setItem(RESULTS_KEY, JSON.stringify([...previous, completedResult]))
-        } catch {
-          // Keep the result visible even when browser storage is unavailable.
-        }
-        setEndedResult(completedResult)
+        persistResult(completedResult)
       } else {
         // The correctly answered country was removed from the front of the queue.
       }
@@ -186,7 +166,8 @@ function TypeCapitalPage() {
           <div className="quiz-result-score">{endedResult.completed}/{endedResult.total}</div>
           <p>Poprawne odpowiedzi: <strong>{endedResult.percentage}%</strong></p>
           <p>Czas: <strong>{formatTime(endedResult.elapsedSeconds)}</strong></p>
-          <p className="quiz-result-note">Wynik został zapisany w tej przeglądarce. Po zakończeniu nie można kontynuować tej próby.</p>
+          <QuizSaveStatusNotice status={saveStatus} errorMessage={saveError} onRetry={retry} />
+          <p className="quiz-result-note">Po zakończeniu nie można kontynuować tej próby.</p>
           <div className="quiz-result-actions">
             <button type="button" className="primary-button" onClick={() => window.location.assign(`/quiz/${category.id}/${area.id}/${modeId}`)}>Rozpocznij nowy quiz</button>
             <Link to={`/categories/${category.id}/areas/${area.id}/modes`} className="secondary-button">Wróć do trybów</Link>

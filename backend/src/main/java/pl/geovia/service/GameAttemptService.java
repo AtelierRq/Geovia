@@ -42,6 +42,9 @@ public class GameAttemptService {
         Profile profile = profileRepository.findById(request.profileId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Profile not found"));
 
+        GameAttempt existingAttempt = attemptRepository.findByUser_IdAndClientAttemptId(profile.getId(), request.clientAttemptId()).orElse(null);
+        if (existingAttempt != null) return toResponse(existingAttempt);
+
         if (request.finishedAt().isBefore(request.startedAt())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "finishedAt must not be before startedAt");
         }
@@ -86,6 +89,7 @@ public class GameAttemptService {
         attempt.setCategoryId(request.categoryId());
         attempt.setAreaId(request.areaId());
         attempt.setModeId(request.modeId());
+        attempt.setClientAttemptId(request.clientAttemptId());
         attempt.setCorrectCount(correct);
         attempt.setTotalQuestions(total);
         attempt.setScorePercent(BigDecimal.valueOf(correct * 100.0 / total).setScale(2, RoundingMode.HALF_UP));

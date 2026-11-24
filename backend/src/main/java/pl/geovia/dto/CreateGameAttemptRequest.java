@@ -17,5 +17,6 @@ public record CreateGameAttemptRequest(
         @NotNull OffsetDateTime startedAt,
         @NotNull OffsetDateTime finishedAt,
         @NotBlank @Pattern(regexp = "^(completed|ended-early|time-expired)$") String status,
-        @Size(max = 300) List<@Valid CountryResultRequest> countryResults
+        @Size(max = 300) List<@Valid CountryResultRequest> countryResults,
+        @NotNull UUID clientAttemptId
 ) {}
