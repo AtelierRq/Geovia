@@ -154,13 +154,11 @@ export type CreateBackendQuizAttempt = {
   categoryId: string
   areaId: string
   modeId: string
-  correctCount: number
-  totalQuestions: number
   durationMs: number
   startedAt: string
   finishedAt: string
   status: 'completed' | 'ended-early'
-  countryResults?: { countryId: string; outcome: 'correct' | 'incorrect' }[]
+  answers: { countryId: string; answer: string }[]
 }
 
 export function createBackendQuizAttempt(profileId: string, attempt: CreateBackendQuizAttempt) {

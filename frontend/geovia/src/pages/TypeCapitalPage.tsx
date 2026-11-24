@@ -8,6 +8,7 @@ import QuizSaveStatusNotice from '../components/QuizSaveStatus'
 import { areas } from '../data/areas'
 import { capitals } from '../data/capitals'
 import { countries, normalizeCountryName } from '../data/countries'
+import { formatPercentage } from '../utils/formatPercentage'
 import '../styles/quiz-common.css'
 import '../styles/capital-quiz.css'
 
@@ -54,6 +55,7 @@ function TypeCapitalPage() {
   const [remainingItems, setRemainingItems] = useState(() => shuffleItems(baseQuizItems))
   const [answer, setAnswer] = useState('')
   const [foundIds, setFoundIds] = useState<string[]>([])
+  const [solvedAnswers, setSolvedAnswers] = useState<Record<string, string>>({})
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error' | 'info'; text: string } | null>(null)
   const [startedAt, setStartedAt] = useState<number | null>(null)
   const [now, setNow] = useState(Date.now())
@@ -70,24 +72,18 @@ function TypeCapitalPage() {
     return () => window.clearInterval(timer)
   }, [startedAt, isEnded])
 
-  function persistResult(result: Result) {
+  function persistResult(result: Result, answers = solvedAnswers) {
     setEndedResult(result)
-    const countryResults = baseQuizItems.map((item) => ({
-      countryId: item.countryId,
-      outcome: result.foundCountries.includes(item.countryId) ? 'correct' as const : 'incorrect' as const,
-    }))
     saveAttempt(result, user, {
       clientAttemptId: result.id,
       categoryId,
       areaId,
       modeId,
-      correctCount: result.completed,
-      totalQuestions: result.total,
       durationMs: result.elapsedSeconds * 1000,
       startedAt: new Date(startedAt ?? Date.parse(result.endedAt) - result.elapsedSeconds * 1000).toISOString(),
       finishedAt: result.endedAt,
       status: result.status,
-      countryResults,
+      answers: Object.entries(answers).map(([countryId, answer]) => ({ countryId, answer })),
     })
   }
 
@@ -96,7 +92,7 @@ function TypeCapitalPage() {
     persistResult({
       id: crypto.randomUUID(), categoryId, areaId, modeId,
       completed: foundIds.length, total: baseQuizItems.length,
-      percentage: Math.round((foundIds.length / baseQuizItems.length) * 100),
+      percentage: (foundIds.length / baseQuizItems.length) * 100,
       elapsedSeconds, endedAt: new Date().toISOString(), status, foundCountries: foundIds,
     })
   }
@@ -116,6 +112,8 @@ function TypeCapitalPage() {
     if (!normalized) return
     if ([current.name, ...(current.aliases ?? [])].some((name) => normalizeCountryName(name) === normalized)) {
       if (startedAt === null) setStartedAt(Date.now())
+      const nextAnswers = { ...solvedAnswers, [current.countryId]: answer }
+      setSolvedAnswers(nextAnswers)
       setFoundIds((items) => [...items, current.countryId])
       setRemainingItems((items) => items.slice(1))
       setFeedback({ type: 'success', text: `Dobrze! Stolicą państwa ${current.countryName} jest ${current.name}.` })
@@ -130,7 +128,7 @@ function TypeCapitalPage() {
           endedAt: new Date().toISOString(), status: 'completed',
           foundCountries: [...foundIds, current.countryId],
         }
-        persistResult(completedResult)
+        persistResult(completedResult, nextAnswers)
       } else {
         // The correctly answered country was removed from the front of the queue.
       }
@@ -164,7 +162,7 @@ function TypeCapitalPage() {
           <span className="eyebrow">QUIZ ZAKOŃCZONY</span>
           <h1>{endedResult.status === 'completed' ? 'Gratulacje! Uzupełniono wszystkie stolice.' : 'Wynik quizu'}</h1>
           <div className="quiz-result-score">{endedResult.completed}/{endedResult.total}</div>
-          <p>Poprawne odpowiedzi: <strong>{endedResult.percentage}%</strong></p>
+          <p>Poprawne odpowiedzi: <strong>{formatPercentage(endedResult.percentage)}</strong></p>
           <p>Czas: <strong>{formatTime(endedResult.elapsedSeconds)}</strong></p>
           <QuizSaveStatusNotice status={saveStatus} errorMessage={saveError} onRetry={retry} />
           <p className="quiz-result-note">Po zakończeniu nie można kontynuować tej próby.</p>
@@ -184,7 +182,7 @@ function TypeCapitalPage() {
           <section className="quiz-stats" aria-label="Postęp quizu">
             <div className="quiz-stat"><Flag size={19} /><span><strong>{foundIds.length}/{baseQuizItems.length}</strong><small>Poprawne odpowiedzi</small></span></div>
             <div className="quiz-stat"><Clock3 size={19} /><span><strong>{formatTime(elapsedSeconds)}</strong><small>Czas</small></span></div>
-            <div className="quiz-stat"><Trophy size={19} /><span><strong>{Math.round(foundIds.length / baseQuizItems.length * 100)}%</strong><small>Ukończenie quizu</small></span></div>
+            <div className="quiz-stat"><Trophy size={19} /><span><strong>{formatPercentage(foundIds.length / baseQuizItems.length * 100)}</strong><small>Ukończenie quizu</small></span></div>
           </section>
 
           <section className="capital-quiz-card">

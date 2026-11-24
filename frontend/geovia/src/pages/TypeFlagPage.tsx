@@ -8,6 +8,7 @@ import QuizSaveStatusNotice from '../components/QuizSaveStatus'
 import { areas } from '../data/areas'
 import { countries, normalizeCountryName } from '../data/countries'
 import { countryFlags } from '../data/countryFlags'
+import { formatPercentage } from '../utils/formatPercentage'
 import '../styles/quiz-common.css'
 import '../styles/capital-quiz.css'
 import '../styles/flag-quiz.css'
@@ -53,6 +54,7 @@ function TypeFlagPage() {
   const [remainingItems, setRemainingItems] = useState(() => shuffleItems(baseQuizItems))
   const [answer, setAnswer] = useState('')
   const [foundIds, setFoundIds] = useState<string[]>([])
+  const [solvedAnswers, setSolvedAnswers] = useState<Record<string, string>>({})
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error' | 'info'; text: string } | null>(null)
   const [startedAt, setStartedAt] = useState<number | null>(null)
   const [now, setNow] = useState(Date.now())
@@ -69,22 +71,16 @@ function TypeFlagPage() {
     return () => window.clearInterval(timer)
   }, [startedAt, isEnded])
 
-  function persistResult(result: Result) {
+  function persistResult(result: Result, answers = solvedAnswers) {
     setEndedResult(result)
-    const countryResults = baseQuizItems.map((item) => ({
-      countryId: item.countryId,
-      outcome: result.foundCountries.includes(item.countryId) ? 'correct' as const : 'incorrect' as const,
-    }))
     saveAttempt(result, user, {
       clientAttemptId: result.id,
       categoryId, areaId, modeId,
-      correctCount: result.completed,
-      totalQuestions: result.total,
       durationMs: result.elapsedSeconds * 1000,
       startedAt: new Date(startedAt ?? Date.parse(result.endedAt) - result.elapsedSeconds * 1000).toISOString(),
       finishedAt: result.endedAt,
       status: result.status,
-      countryResults,
+      answers: Object.entries(answers).map(([countryId, answer]) => ({ countryId, answer })),
     })
   }
 
@@ -95,7 +91,7 @@ function TypeFlagPage() {
       categoryId, areaId, modeId,
       completed: foundIds.length,
       total: baseQuizItems.length,
-      percentage: Math.round((foundIds.length / baseQuizItems.length) * 100),
+      percentage: (foundIds.length / baseQuizItems.length) * 100,
       elapsedSeconds: startedAt === null ? 0 : Math.floor((Date.now() - startedAt) / 1000),
       endedAt: new Date().toISOString(),
       status,
@@ -124,12 +120,14 @@ function TypeFlagPage() {
     const acceptedNames = [current.countryName, ...current.aliases]
     if (acceptedNames.some((name) => normalizeCountryName(name) === normalized)) {
       const nextFoundIds = [...foundIds, current.countryId]
+      const nextAnswers = { ...solvedAnswers, [current.countryId]: answer }
       const nextItems = remainingItems.slice(1)
       if (startedAt === null) {
         setStartedAt(Date.now())
         setNow(Date.now())
       }
       setFoundIds(nextFoundIds)
+      setSolvedAnswers(nextAnswers)
       setRemainingItems(nextItems)
       setFeedback({ type: 'success', text: `Dobrze! To flaga państwa ${current.countryName}.` })
       setAnswer('')
@@ -146,7 +144,7 @@ function TypeFlagPage() {
           status: 'completed',
           foundCountries: nextFoundIds,
         }
-        persistResult(result)
+        persistResult(result, nextAnswers)
       }
     } else {
       if (startedAt === null) {
@@ -181,7 +179,7 @@ function TypeFlagPage() {
           <span className="eyebrow">QUIZ ZAKOŃCZONY</span>
           <h1>{endedResult.status === 'completed' ? 'Gratulacje! Rozpoznano wszystkie flagi.' : 'Wynik quizu'}</h1>
           <div className="quiz-result-score">{endedResult.completed}/{endedResult.total}</div>
-          <p>Poprawne odpowiedzi: <strong>{endedResult.percentage}%</strong></p>
+          <p>Poprawne odpowiedzi: <strong>{formatPercentage(endedResult.percentage)}</strong></p>
           <p>Czas: <strong>{formatTime(endedResult.elapsedSeconds)}</strong></p>
           <QuizSaveStatusNotice status={saveStatus} errorMessage={saveError} onRetry={retry} />
           <p className="quiz-result-note">Po zakończeniu nie można kontynuować tej próby.</p>
@@ -201,7 +199,7 @@ function TypeFlagPage() {
           <section className="quiz-stats" aria-label="Postęp quizu">
             <div className="quiz-stat"><Flag size={19} /><span><strong>{foundIds.length}/{baseQuizItems.length}</strong><small>Poprawne odpowiedzi</small></span></div>
             <div className="quiz-stat"><Clock3 size={19} /><span><strong>{formatTime(elapsedSeconds)}</strong><small>Czas</small></span></div>
-            <div className="quiz-stat"><Trophy size={19} /><span><strong>{Math.round(foundIds.length / baseQuizItems.length * 100)}%</strong><small>Ukończenie quizu</small></span></div>
+            <div className="quiz-stat"><Trophy size={19} /><span><strong>{formatPercentage(foundIds.length / baseQuizItems.length * 100)}</strong><small>Ukończenie quizu</small></span></div>
           </section>
 
           <section className="capital-quiz-card flag-quiz-card">

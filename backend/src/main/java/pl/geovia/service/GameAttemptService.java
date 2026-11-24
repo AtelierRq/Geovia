@@ -27,15 +27,18 @@ public class GameAttemptService {
     private final GameAttemptRepository attemptRepository;
     private final GameAttemptCountryResultRepository countryResultRepository;
     private final ProfileRepository profileRepository;
+    private final QuizAnswerBank answerBank;
 
     public GameAttemptService(
             GameAttemptRepository attemptRepository,
             GameAttemptCountryResultRepository countryResultRepository,
-            ProfileRepository profileRepository
+            ProfileRepository profileRepository,
+            QuizAnswerBank answerBank
     ) {
         this.attemptRepository = attemptRepository;
         this.countryResultRepository = countryResultRepository;
         this.profileRepository = profileRepository;
+        this.answerBank = answerBank;
     }
 
     public QuizAttemptResponse createAttempt(CreateGameAttemptRequest request) {
@@ -53,36 +56,25 @@ public class GameAttemptService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Duration does not match the supplied timestamps");
         }
 
-        if (request.correctCount() > request.totalQuestions()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Correct answers cannot exceed total questions");
-        }
-
-        Set<String> countryIds = new HashSet<>();
-        int countryCorrect = 0;
-        List<CountryResultRequest> normalizedResults = new ArrayList<>();
-        List<CountryResultRequest> submittedResults = request.countryResults() == null
-                ? List.of()
-                : request.countryResults();
-        for (CountryResultRequest result : submittedResults) {
-            if (!countryIds.add(result.countryId())) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Country results must not contain duplicate country IDs");
+        List<QuizAnswerBank.Entry> scope = answerBank.scope(request.categoryId(), request.areaId(), request.modeId());
+        if (scope.isEmpty()) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Quiz has no questions");
+        Map<String, String> submittedAnswers = new HashMap<>();
+        for (QuizAnswerRequest answer : request.answers() == null ? List.<QuizAnswerRequest>of() : request.answers()) {
+            if (submittedAnswers.putIfAbsent(answer.countryId(), answer.answer()) != null) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Answers must not contain duplicate country IDs");
             }
-            CountryResultOutcome outcome = parseOutcome(result.outcome());
-            if (outcome == CountryResultOutcome.CORRECT) countryCorrect++;
-            normalizedResults.add(new CountryResultRequest(result.countryId(), outcome.name().toLowerCase(Locale.ROOT)));
+            if (scope.stream().noneMatch(entry -> entry.id().equals(answer.countryId()))) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Answer refers to a question outside this quiz");
+            }
         }
-
-        if (!normalizedResults.isEmpty() && countryCorrect != request.correctCount()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Country results do not match correctCount");
+        List<CountryResultRequest> normalizedResults = scope.stream().map(entry -> new CountryResultRequest(
+                entry.id(), answerBank.isCorrect(entry, request.categoryId(), submittedAnswers.getOrDefault(entry.id(), "")) ? "correct" : "incorrect"
+        )).toList();
+        int correct = (int) normalizedResults.stream().filter(result -> result.outcome().equals("correct")).count();
+        int total = scope.size();
+        if (request.status().equals("completed") && correct != total) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "A completed quiz must have every answer correct");
         }
-        if (!normalizedResults.isEmpty()
-                && Set.of("countries", "capitals", "flags").contains(request.categoryId())
-                && normalizedResults.size() != request.totalQuestions()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Country results must cover the full quiz scope");
-        }
-
-        int total = request.totalQuestions();
-        int correct = request.correctCount();
         GameAttempt attempt = new GameAttempt();
         attempt.setUser(profile);
         attempt.setAttemptType(AttemptType.QUIZ);
@@ -93,7 +85,7 @@ public class GameAttemptService {
         attempt.setCorrectCount(correct);
         attempt.setTotalQuestions(total);
         attempt.setScorePercent(BigDecimal.valueOf(correct * 100.0 / total).setScale(2, RoundingMode.HALF_UP));
-        attempt.setDurationMs(request.durationMs());
+        attempt.setDurationMs(measuredDuration);
         attempt.setStatus(parseStatus(request.status()));
         attempt.setStartedAt(request.startedAt());
         attempt.setFinishedAt(request.finishedAt());

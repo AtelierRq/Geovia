@@ -11,12 +11,10 @@ public record CreateGameAttemptRequest(
         @NotBlank @Size(max = 64) String categoryId,
         @NotBlank @Size(max = 64) String areaId,
         @NotBlank @Size(max = 64) String modeId,
-        @NotNull @Min(0) Integer correctCount,
-        @NotNull @Min(1) @Max(10000) Integer totalQuestions,
         @NotNull @Min(0) Long durationMs,
         @NotNull OffsetDateTime startedAt,
         @NotNull OffsetDateTime finishedAt,
         @NotBlank @Pattern(regexp = "^(completed|ended-early|time-expired)$") String status,
-        @Size(max = 300) List<@Valid CountryResultRequest> countryResults,
+        @Size(max = 300) List<@Valid QuizAnswerRequest> answers,
         @NotNull UUID clientAttemptId
 ) {}
