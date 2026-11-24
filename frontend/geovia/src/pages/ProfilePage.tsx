@@ -31,6 +31,7 @@ import { countries } from "../data/countries";
 import { getCapitalForCountry } from "../data/capitals";
 import { getCountryFlag } from "../data/countryFlags";
 import { getCountryKnowledgeStatusLabel, type CountryMapStatus, type KnowledgeStatus } from "../utils/countryKnowledge";
+import { formatPercentage } from "../utils/formatPercentage";
 import "../styles/profile.css";
 
 type KnowledgeElementKey = "name" | "capital" | "flag";
@@ -149,8 +150,8 @@ function ProfilePage() {
   const thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
   const recentResults = results.filter((result) => new Date(result.endedAt).getTime() >= thirtyDaysAgo);
   const correctAnswers = profileStats?.totalCorrectAnswers ?? results.reduce((sum, result) => sum + (Number(result.completed) || 0), 0);
-  const averageScore = profileStats ? Math.round(Number(profileStats.averageScorePercent)) : results.length
-    ? Math.round(results.reduce((sum, result) => sum + (Number(result.percentage) || 0), 0) / results.length)
+  const averageScore = profileStats ? Number(profileStats.averageScorePercent) : results.length
+    ? results.reduce((sum, result) => sum + (Number(result.total) > 0 ? Number(result.completed) / Number(result.total) * 100 : 0), 0) / results.length
     : 0;
   const lastResult = results[0];
   const serverKnowledgeById = useMemo(() => new Map(backendKnowledge.map((item) => [item.countryId, item])), [backendKnowledge]);
@@ -345,7 +346,7 @@ function ProfilePage() {
               <Activity size={20} />
             </div>
             <span>Średni wynik</span>
-            <strong>{averageScore}%</strong>
+            <strong>{formatPercentage(averageScore)}</strong>
             <small>średnia z zapisanych quizów</small>
           </article>
         </div>

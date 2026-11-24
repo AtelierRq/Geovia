@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Activity, ArrowLeft, CalendarDays, CheckCircle2, Clock3, MapPin, Trophy, UserRound } from 'lucide-react'
 import { Link, useLocation, useParams } from 'react-router-dom'
 import { getPublicProfile, getPublicProfileActivity, type PublicProfile, type PublicProfileActivity } from '../api/profile'
+import { formatPercentage } from '../utils/formatPercentage'
 import '../styles/profile.css'
 
 const CATEGORY_NAMES: Record<string, string> = {
@@ -56,7 +57,7 @@ function PublicProfilePage() {
             <article className="profile-stat-card"><div className="profile-stat-icon"><Trophy size={19} /></div><span>Quizy łącznie</span><strong>{activity.totalAttempts}</strong><small>od początku korzystania</small></article>
             <article className="profile-stat-card"><div className="profile-stat-icon"><CalendarDays size={19} /></div><span>Ostatnie 30 dni</span><strong>{activity.attemptsLast30Days}</strong><small>rozegrane quizy</small></article>
             <article className="profile-stat-card"><div className="profile-stat-icon"><CheckCircle2 size={19} /></div><span>Poprawne odpowiedzi</span><strong>{activity.totalCorrectAnswers}</strong><small>suma zaliczonych elementów</small></article>
-            <article className="profile-stat-card"><div className="profile-stat-icon"><Activity size={19} /></div><span>Średni wynik</span><strong>{Math.round(Number(activity.averageScorePercent))}%</strong><small>średnia z zapisanych quizów</small></article>
+            <article className="profile-stat-card"><div className="profile-stat-icon"><Activity size={19} /></div><span>Średni wynik</span><strong>{formatPercentage(activity.averageScorePercent)}</strong><small>średnia z zapisanych quizów</small></article>
           </div>
           <div className="profile-last-activity public-last-activity"><Clock3 size={18} /><div><strong>Ostatnia aktywność</strong><span>{activity.lastAttemptAt ? `${formatDate(activity.lastAttemptAt)} · ${CATEGORY_NAMES[activity.lastCategoryId ?? ''] ?? activity.lastCategoryId ?? 'Quiz'}` : 'Brak zapisanych rozgrywek'}</span></div>{activity.lastScorePercent !== null && <strong className="profile-last-score">{Number(activity.lastScorePercent).toLocaleString('pl-PL', { maximumFractionDigits: 2 })}%</strong>}</div>
         </>}
